@@ -1,4 +1,6 @@
 import os
+import re
+import xacro
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration, Command
@@ -7,18 +9,36 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 
+def resolve_package_uris(urdf_string):
+    """Заменяет все package://... на file:///absolute/path."""
+    def repl(match):
+        pkg = match.group(1)
+        rest = match.group(2)
+        try:
+            pkg_path = get_package_share_directory(pkg)
+            abs_path = os.path.join(pkg_path, rest)
+            # Добавляем префикс file:// (с тремя слэшами для абсолютного пути)
+            return 'file://' + abs_path
+        except Exception:
+            return match.group(0)  # если пакет не найден, оставляем как есть
+    return re.sub(r'package://(\w+)/(.+)', repl, urdf_string)
+
 def launch_setup(context, *args, **kwargs):
     use_sim = LaunchConfiguration('use_sim').perform(context)
     pkg_soarm101 = get_package_share_directory('soarm101_description')
     pkg_soarm101_ros2_control = get_package_share_directory('soarm101_ros2_control')
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
-    robot_description_content = Command([
-        'xacro ',
-        os.path.join(pkg_soarm101, 'urdf', 'soarm101_for_moveit.urdf.xacro'),
-        ' use_sim:=', use_sim
-    ])
-    robot_params = {'robot_description': robot_description_content}
+    # 1. Разбираем xacro в строку
+    xacro_file = os.path.join(pkg_soarm101, 'urdf', 'soarm101.xacro')
+    doc = xacro.parse(open(xacro_file))
+    xacro.process_doc(doc, mappings={'use_sim': use_sim})
+    urdf_str = doc.toprettyxml(indent='  ')
+
+    # 2. Заменяем package:// -> абсолютные пути
+    urdf_resolved = resolve_package_uris(urdf_str)
+    
+    robot_params = {'robot_description': urdf_resolved}
 
     robot_state_publisher = Node(
         package='robot_state_publisher',
