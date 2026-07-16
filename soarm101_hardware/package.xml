@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>soarm101_hardware</name>
+  <version>1.0.0</version>
+  <description>Hardware interface for real SO-ARM101 via SerialPort. ROS2_control hardware component plugin.</description>
+  <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
+
+  <depend>pluginlib</depend>
+  <depend>hardware_interface</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>std_msgs</depend>
+  <depend>scservo_sdk</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,23 @@
+# MoveIt uses this configuration for controller management
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - Arm_group_controller
+    - gripper_group_controller
+
+  Arm_group_controller:
+    type: FollowJointTrajectory
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_flex_joint
+      - wrist_flex_joint
+      - wrist_roll_joint
+  gripper_group_controller:
+    type: GripperCommand
+    joints:
+      - gripper_jaw_joint
+    action_ns: gripper_cmd
+    default: true

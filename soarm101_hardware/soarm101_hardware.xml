@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<library path="soarm101_hardware">
+  <class name="soarm101_hardware/SOARM101SystemHardware" type="soarm101_hardware::SOARM101SystemHardware" base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control hardware interface for SOARM-101 robot with Feetech servos
+    </description>
+  </class>
+</library>
