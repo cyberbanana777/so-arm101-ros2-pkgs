@@ -6,18 +6,18 @@
 
   <!-- URDF_description of SOARM101 -->
 
-  <xacro:include filename="package://soarm101_description/urdf/soarm101.xacro"/>
+  <xacro:include filename="$(find soarm101_description)/urdf/soarm101.xacro"/>
   
 
   <!--=================== ROS2_CONTROL & PLUGINS ===================-->
   <!-- Выбор варианта в зависимости от аргумента use_sim -->
   <xacro:if value="$(arg use_sim)">
     <!-- СИМУЛЯЦИЯ -->
-    <xacro:include filename="package://soarm101_ros2_control/urdf/ros2_control_sim.xacro"/>
+    <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_sim.xacro"/>
   </xacro:if>
   <xacro:unless value="$(arg use_sim)">
     <!-- РЕАЛЬНЫЙ РОБОТ -->
-    <xacro:include filename="package://soarm101_ros2_control/urdf/ros2_control_real.xacro"/>
+    <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_real.xacro"/>
   </xacro:unless>
 
 </robot>
