@@ -3,10 +3,11 @@
 
   <ros2_control name="RealRobotSystem" type="system">
     <hardware>
-      <plugin>soarm101_hardware/SOARM101Hardware</plugin>
+      <plugin>soarm101_hardware/SOARM101SystemHardware</plugin>
       <!-- Параметры, передаваемые в ваш плагин -->
       <param name="port">/dev/ttyACM0</param>
       <param name="baudrate">1000000</param>
+      <param name="calibration_file">$(find soarm101_ros2_control)/config/motor_calibration.yaml</param>
       <!-- другие параметры -->
     </hardware>
     <!-- Интерфейсы для каждого сустава -->
@@ -14,31 +15,61 @@
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+      <state_interface name="temperature"/>
+      <state_interface name="voltage"/>
+      <state_interface name="current"/>
+      <state_interface name="moving_flag"/>
     </joint>
     <joint name="shoulder_lift_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+      <state_interface name="temperature"/>
+      <state_interface name="voltage"/>
+      <state_interface name="current"/>
+      <state_interface name="moving_flag"/>
     </joint>
     <joint name="elbow_flex_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+      <state_interface name="temperature"/>
+      <state_interface name="voltage"/>
+      <state_interface name="current"/>
+      <state_interface name="moving_flag"/>
     </joint>
     <joint name="wrist_flex_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+      <state_interface name="temperature"/>
+      <state_interface name="voltage"/>
+      <state_interface name="current"/>
+      <state_interface name="moving_flag"/>
     </joint>
     <joint name="wrist_roll_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+      <state_interface name="temperature"/>
+      <state_interface name="voltage"/>
+      <state_interface name="current"/>
+      <state_interface name="moving_flag"/>
     </joint>
     <joint name="gripper_jaw_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+      <state_interface name="temperature"/>
+      <state_interface name="voltage"/>
+      <state_interface name="current"/>
+      <state_interface name="moving_flag"/>
     </joint>
   </ros2_control>
 

@@ -27,554 +27,634 @@
 namespace soarm101_hardware {
 
 SOARM101SystemHardware::SOARM101SystemHardware()
-: driver_initialized_(false), needs_initial_move_(false), initial_move_cycles_remaining_(0) {}
+: driver_initialized_(false)
+{
+}
 
-SOARM101SystemHardware::~SOARM101SystemHardware() {
+SOARM101SystemHardware::~SOARM101SystemHardware()
+{
   if (driver_initialized_) {
     servo_driver_.end();
   }
 }
 
+// ----------------------------------------------------------------------------
+// on_init
+// ----------------------------------------------------------------------------
 hardware_interface::CallbackReturn
-SOARM101SystemHardware::on_init(const hardware_interface::HardwareInfo& info) {
+SOARM101SystemHardware::on_init(const hardware_interface::HardwareInfo & info)
+{
   if (hardware_interface::SystemInterface::on_init(info) !=
       hardware_interface::CallbackReturn::SUCCESS) {
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // Get port parameter (default: /dev/ttyACM0)
+  // --- Порт ---
   port_ = info_.hardware_parameters["port"];
   if (port_.empty()) {
     port_ = "/dev/ttyACM0";
   }
 
-  // Get calibration file parameter
+  // --- Скорость ---
+  std::string baudrate_str = info_.hardware_parameters["baudrate"];
+  if (baudrate_str.empty()) {
+    baudrate_ = 1000000;
+  } else {
+    baudrate_ = std::stoi(baudrate_str);
+  }
+
+  // --- Файл калибровки ---
   calibration_file_ = info_.hardware_parameters["calibration_file"];
 
-  // Get initial positions file parameter
-  initial_positions_file_ = info_.hardware_parameters["initial_positions_file"];
+  // --- Маппинг имён суставов на ID моторов ---
+  motor_ids_["shoulder_pan_joint"]   = 1;
+  motor_ids_["shoulder_lift_joint"]  = 2;
+  motor_ids_["elbow_flex_joint"]     = 3;
+  motor_ids_["wrist_flex_joint"]     = 4;
+  motor_ids_["wrist_roll_joint"]     = 5;
+  motor_ids_["gripper_jaw_joint"]    = 6;
 
-  // Initialize motor ID mapping
-  motor_ids_["shoulder_pan_joint"] = 1;
-  motor_ids_["shoulder_lift_joint"] = 2;
-  motor_ids_["elbow_flex_joint"] = 3;
-  motor_ids_["wrist_flex_joint"] = 4;
-  motor_ids_["wrist_roll_joint"] = 5;
-  motor_ids_["gripper_joint"] = 6;
+  // --- Выделяем память под моторы ---
+  motors_.resize(info_.joints.size());
 
-  // Initialize state and command vectors
-  hw_positions_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_velocities_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  // --- Заполняем структуры начальными данными ---
+  for (size_t i = 0; i < info_.joints.size(); ++i) {
+    const auto & joint = info_.joints[i];
+    auto & motor = motors_[i];
 
-  // Load initial positions if specified
-  for (size_t i = 0; i < info_.joints.size(); i++) {
-    const auto& joint = info_.joints[i];
+    motor.id = motor_ids_[joint.name];          // устанавливаем ID
+    motor.joint_name = joint.name;
+
+    // Если в URDF задана initial_position – используем её
     if (joint.parameters.find("initial_position") != joint.parameters.end()) {
-      hw_positions_[i] = std::stod(joint.parameters.at("initial_position"));
-      hw_commands_[i] = hw_positions_[i];
+      motor.sensors.position = std::stod(joint.parameters.at("initial_position"));
+      motor.command_position = motor.sensors.position;
       RCLCPP_INFO(
-          rclcpp::get_logger("SOARM101SystemHardware"), "Joint '%s' initial position set to: %.3f",
-          joint.name.c_str(), hw_positions_[i]);
+        rclcpp::get_logger("SOARM101SystemHardware"),
+        "Joint '%s' initial position set to: %.3f rad",
+        joint.name.c_str(), motor.sensors.position);
+    } else {
+      // Иначе оставляем 0 (позже прочитаем с сервоприводов)
+      motor.sensors.position = 0.0;
+      motor.command_position = 0.0;
     }
   }
 
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "on_init() finished successfully");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
+// ----------------------------------------------------------------------------
+// on_configure
+// ----------------------------------------------------------------------------
 hardware_interface::CallbackReturn
-SOARM101SystemHardware::on_configure(const rclcpp_lifecycle::State& /*previous_state*/) {
-  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Configuring...please wait...");
+SOARM101SystemHardware::on_configure(const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Configuring...");
 
-  // Load calibration data
+  // --- Загружаем калибровку ---
   if (!calibration_file_.empty() && !loadCalibration()) {
     RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"), "Failed to load calibration from: %s",
-        calibration_file_.c_str());
+      rclcpp::get_logger("SOARM101SystemHardware"),
+      "Failed to load calibration from: %s", calibration_file_.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // Load initial positions
-  if (!initial_positions_file_.empty() && !loadInitialPositions()) {
+  // --- Подключаемся к шине ---
+  if (!servo_driver_.begin(baudrate_, port_.c_str())) {
     RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"), "Failed to load initial positions from: %s",
-        initial_positions_file_.c_str());
-    return hardware_interface::CallbackReturn::ERROR;
-  }
-
-  // Initialize servo driver
-  if (!servo_driver_.begin(1000000, port_.c_str())) {
-    RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "Failed to connect to motor bus on port %s. Check connection and permissions.",
-        port_.c_str());
+      rclcpp::get_logger("SOARM101SystemHardware"),
+      "Failed to connect to motor bus on port %s. Check connection and permissions.",
+      port_.c_str());
     RCLCPP_ERROR(rclcpp::get_logger("SOARM101SystemHardware"), "TROUBLESHOOTING:");
     RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "1. Check if robot is connected: ls /dev/ttyACM* /dev/ttyUSB*");
+      rclcpp::get_logger("SOARM101SystemHardware"),
+      "1. Check if robot is connected: ls /dev/ttyACM* /dev/ttyUSB*");
     RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "2. If robot is on different port, launch with: port:=/dev/ttyACMX");
+      rclcpp::get_logger("SOARM101SystemHardware"),
+      "2. If robot is on different port, launch with: port:=/dev/ttyACMX");
     RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "3. Check permissions: sudo usermod -aG dialout $USER (then logout/login)");
+      rclcpp::get_logger("SOARM101SystemHardware"),
+      "3. Check permissions: sudo usermod -aG dialout $USER (then logout/login)");
     return hardware_interface::CallbackReturn::ERROR;
   }
-
   driver_initialized_ = true;
 
-  // Initialize joint positions and commands
-  for (size_t i = 0; i < hw_positions_.size(); i++) {
-    if (std::isnan(hw_positions_[i])) {
-      hw_positions_[i] = 0.0;
+  // --- Инициализируем команды текущими позициями (если не заданы) ---
+  for (size_t i = 0; i < motors_.size(); ++i) {
+    auto & motor = motors_[i];
+    if (std::isnan(motor.sensors.position)) {
+      motor.sensors.position = 0.0;
     }
-    hw_velocities_[i] = 0.0;
-    hw_commands_[i] = hw_positions_[i];
+    motor.command_position = motor.sensors.position;
   }
 
-  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Successfully configured!");
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Configuration completed");
 
+  // Установка парковочной позиции (в порядке info_.joints)
+  // Можно загружать из параметров, но пока захардкодим.
+  park_positions_.resize(info_.joints.size());
+  if (info_.joints.size() == 6) {
+      park_positions_[0] = 0.004;   // shoulder_pan
+      park_positions_[1] = -1.712;  // shoulder_lift
+      park_positions_[2] = 1.560;   // elbow_flex
+      park_positions_[3] = 0.748;   // wrist_flex
+      park_positions_[4] = -0.029;  // wrist_roll
+      park_positions_[5] = 0.461;   // gripper_jaw
+      RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Park position set.");
+  } else {
+      RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardware"), 
+                  "Unexpected number of joints (%zu), park positions not set.", info_.joints.size());
+  }
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> SOARM101SystemHardware::export_state_interfaces() {
+// ----------------------------------------------------------------------------
+// export_state_interfaces
+// ----------------------------------------------------------------------------
+std::vector<hardware_interface::StateInterface>
+SOARM101SystemHardware::export_state_interfaces()
+{
   std::vector<hardware_interface::StateInterface> state_interfaces;
-  for (uint i = 0; i < info_.joints.size(); i++) {
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[i]));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[i]));
-  }
+  for (size_t i = 0; i < info_.joints.size(); ++i) {
+    const auto & joint = info_.joints[i];
+    auto & motor = motors_[i];
 
+    state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &motor.sensors.position);
+    state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &motor.sensors.velocity);
+    state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT,   &motor.sensors.effort);
+    state_interfaces.emplace_back(joint.name, "temperature",  &motor.sensors.temperature);
+    state_interfaces.emplace_back(joint.name, "voltage",      &motor.sensors.voltage);
+    state_interfaces.emplace_back(joint.name, "current",      &motor.sensors.current);
+    state_interfaces.emplace_back(joint.name, "moving_flag",  &motor.sensors.moving_flag);
+  }
   return state_interfaces;
 }
 
-std::vector<hardware_interface::CommandInterface> SOARM101SystemHardware::export_command_interfaces() {
+// ----------------------------------------------------------------------------
+// export_command_interfaces
+// ----------------------------------------------------------------------------
+std::vector<hardware_interface::CommandInterface>
+SOARM101SystemHardware::export_command_interfaces()
+{
   std::vector<hardware_interface::CommandInterface> command_interfaces;
-  for (uint i = 0; i < info_.joints.size(); i++) {
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_[i]));
+  for (size_t i = 0; i < info_.joints.size(); ++i) {
+    command_interfaces.emplace_back(
+      info_.joints[i].name, hardware_interface::HW_IF_POSITION, &motors_[i].command_position);
   }
-
   return command_interfaces;
 }
 
+// ----------------------------------------------------------------------------
+// on_activate
+// ----------------------------------------------------------------------------
 hardware_interface::CallbackReturn
-SOARM101SystemHardware::on_activate(const rclcpp_lifecycle::State& /*previous_state*/) {
-  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Activating...please wait...");
+SOARM101SystemHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Activating...");
 
-  // Enable torque for all motors
-  for (const auto& pair : motor_ids_) {
+  // --- Включаем момент на всех моторах ---
+  for (const auto & pair : motor_ids_) {
     int motor_id = pair.second;
-    if (servo_driver_.EnableTorque(motor_id, 1) == -1) {
+    if (servo_driver_.EnableTorque(motor_id, ENABLE_SERVO) == FAIL_CODE) {
       RCLCPP_ERROR(
-          rclcpp::get_logger("SOARM101SystemHardware"), "Failed to enable torque for motor %d",
-          motor_id);
+        rclcpp::get_logger("SOARM101SystemHardware"),
+        "Failed to enable torque for motor %d", motor_id);
       return hardware_interface::CallbackReturn::ERROR;
     }
     rclcpp::sleep_for(std::chrono::milliseconds(50));
   }
 
-  // Read current positions
+  // --- Читаем текущие позиции и другие данные ---
   RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Current motor positions:");
-  for (size_t i = 0; i < info_.joints.size(); i++) {
-    const std::string& joint_name = info_.joints[i].name;
+  for (size_t i = 0; i < info_.joints.size(); ++i) {
+    const std::string & joint_name = info_.joints[i].name;
     int motor_id = motor_ids_[joint_name];
 
-    if (servo_driver_.FeedBack(motor_id) != -1) {
-      int raw_pos = servo_driver_.ReadPos(i);
-      bool is_gripper = (joint_name == "gripper");
-      hw_positions_[i] = rawToRadians(raw_pos, motor_calibration_[motor_id], is_gripper);
+    if (servo_driver_.FeedBack(motor_id) == SUCSESS_CODE) {
+      int raw_pos         = servo_driver_.ReadPos(motor_id);
+      int raw_velocity    = servo_driver_.ReadSpeed(motor_id);
+      int raw_effort      = servo_driver_.ReadLoad(motor_id);
+      int raw_temperature = servo_driver_.ReadTemper(motor_id);
+      int raw_voltage     = servo_driver_.ReadVoltage(motor_id);
+      int raw_current     = servo_driver_.ReadCurrent(motor_id);
+      int raw_moving_flag = servo_driver_.ReadMove(motor_id);
 
-      hw_commands_[i] = hw_positions_[i];
+      auto & motor = motors_[i];
+      motor.sensors.position = rawToRadians(raw_pos, motor);
+      motor.sensors.velocity = static_cast<double>(raw_velocity) / 4096.0 * 2.0 * M_PI;
+      motor.sensors.effort   = static_cast<double>(raw_effort);
+      motor.sensors.temperature = static_cast<double>(raw_temperature);
+      motor.sensors.voltage  = static_cast<double>(raw_voltage) / 10.0;
+      motor.sensors.current  = static_cast<double>(raw_current) / 1000.0;
+      motor.sensors.moving_flag = static_cast<double>(raw_moving_flag);
+
+      motor.command_position = motor.sensors.position;
 
       RCLCPP_INFO(
-          rclcpp::get_logger("SOARM101SystemHardware"), "  %s: %.3f rad (motor: %d raw)",
-          joint_name.c_str(), hw_positions_[i], raw_pos);
+        rclcpp::get_logger("SOARM101SystemHardware"),
+        "  %s: %.3f rad (raw: %d)", joint_name.c_str(), motor.sensors.position, raw_pos);
     }
   }
 
-  // Prepare for initial position move (will be executed in first write() call)
-  if (!initial_positions_.empty()) {
-    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Preparing initial positions...");
-    for (size_t i = 0; i < info_.joints.size(); i++) {
-      const std::string& joint_name = info_.joints[i].name;
-
-      // Use initial position if defined, otherwise keep current position
-      if (initial_positions_.count(joint_name) > 0) {
-        double init_pos = initial_positions_[joint_name];
-        hw_commands_[i] = init_pos;
-        // Update position state to match target so controllers don't fight the initial move
-        hw_positions_[i] = init_pos;
-
-        RCLCPP_INFO(
-            rclcpp::get_logger("SOARM101SystemHardware"), "  %s: %.3f rad", joint_name.c_str(),
-            init_pos);
-      } else {
-        // No initial position defined, keep current position
-        hw_commands_[i] = hw_positions_[i];
-      }
-    }
-
-    // Set flag to trigger initial move in first write() cycle
-    needs_initial_move_ = true;
-    // Lock position readings immediately to prevent controllers from reading actual positions
-    initial_move_cycles_remaining_ = 1000;
-    RCLCPP_INFO(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "Position readings locked during initial move (10 seconds at 100Hz).");
-  } else {
-    RCLCPP_INFO(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "No initial positions loaded, robot will stay at current position");
-  }
-
-  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Successfully activated!");
-
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Activation completed");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
+// ----------------------------------------------------------------------------
+// on_deactivate
+// ----------------------------------------------------------------------------
 hardware_interface::CallbackReturn
-SOARM101SystemHardware::on_deactivate(const rclcpp_lifecycle::State& /*previous_state*/) {
-  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Deactivating...please wait...");
+SOARM101SystemHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/)
+{
+    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Deactivating...");
 
-  // Disable torque for all motors
-  for (const auto& pair : motor_ids_) {
-    int motor_id = pair.second;
-    if (servo_driver_.EnableTorque(motor_id, 0) == 0) {
-      RCLCPP_ERROR(
-          rclcpp::get_logger("SOARM101SystemHardware"), "Failed to disable torque for motor %d",
-          motor_id);
-      return hardware_interface::CallbackReturn::ERROR;
+    // 1. Переместиться в парковочную позицию
+    moveToParkPosition();
+
+    // 2. Отключить момент
+    for (const auto & pair : motor_ids_) {
+        int motor_id = pair.second;
+        if (servo_driver_.EnableTorque(motor_id, DISABLE_SERVO) == 0) {
+            RCLCPP_ERROR(
+                rclcpp::get_logger("SOARM101SystemHardware"),
+                "Failed to disable torque for motor %d", motor_id);
+            return hardware_interface::CallbackReturn::ERROR;
+        }
+        rclcpp::sleep_for(std::chrono::milliseconds(50));
     }
-    rclcpp::sleep_for(std::chrono::milliseconds(50));
-  }
 
-  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Successfully deactivated!");
-
-  return hardware_interface::CallbackReturn::SUCCESS;
+    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Deactivation completed");
+    return hardware_interface::CallbackReturn::SUCCESS;
 }
-
+// ----------------------------------------------------------------------------
+// read
+// ----------------------------------------------------------------------------
 hardware_interface::return_type
-SOARM101SystemHardware::read(const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
-  // If we're still in initial move period, skip reading actual positions
-  // This keeps hw_positions_ locked to target values so controllers don't fight the move
-  if (initial_move_cycles_remaining_ > 0) {
-    initial_move_cycles_remaining_--;
-    if (initial_move_cycles_remaining_ == 0) {
-      RCLCPP_INFO(
-          rclcpp::get_logger("SOARM101SystemHardware"),
-          "Initial move complete. Resuming normal position readings.");
-    }
-    return hardware_interface::return_type::OK;
-  }
-
-  // Read positions from all motors
-  for (size_t i = 0; i < info_.joints.size(); i++) {
-    const std::string& joint_name = info_.joints[i].name;
+SOARM101SystemHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+{
+  // Читаем данные со всех моторов
+  for (size_t i = 0; i < info_.joints.size(); ++i) {
+    const std::string & joint_name = info_.joints[i].name;
     int motor_id = motor_ids_[joint_name];
 
-    if (servo_driver_.FeedBack(motor_id) != -1) {
-      int raw_pos = servo_driver_.ReadPos(motor_id);
-      bool is_gripper = (joint_name == "gripper");
+    if (servo_driver_.FeedBack(motor_id) == SUCSESS_CODE) {
+      int raw_pos         = servo_driver_.ReadPos(motor_id);
+      int raw_velocity    = servo_driver_.ReadSpeed(motor_id);
+      int raw_effort      = servo_driver_.ReadLoad(motor_id);
+      int raw_temperature = servo_driver_.ReadTemper(motor_id);
+      int raw_voltage     = servo_driver_.ReadVoltage(motor_id);
+      int raw_current     = servo_driver_.ReadCurrent(motor_id);
+      int raw_moving_flag = servo_driver_.ReadMove(motor_id);
 
-      hw_positions_[i] = rawToRadians(raw_pos, motor_calibration_[motor_id], is_gripper);
+      auto & motor = motors_[i];
+      motor.sensors.position = rawToRadians(raw_pos, motor);
+      motor.sensors.velocity = static_cast<double>(raw_velocity) / 4096.0 * 2.0 * M_PI;
+      motor.sensors.effort   = static_cast<double>(raw_effort);
+      motor.sensors.temperature = static_cast<double>(raw_temperature);
+      motor.sensors.voltage  = static_cast<double>(raw_voltage) / 10.0;
+      motor.sensors.current  = static_cast<double>(raw_current) / 1000.0;
+      motor.sensors.moving_flag = static_cast<double>(raw_moving_flag);
     }
-
-    hw_velocities_[i] = 0.0;  // TODO: Read actual velocity if needed
   }
 
   return hardware_interface::return_type::OK;
 }
 
+// ----------------------------------------------------------------------------
+// write
+// ----------------------------------------------------------------------------
 hardware_interface::return_type
-SOARM101SystemHardware::write(const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
-  // Use slower speed for initial move
+SOARM101SystemHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+{
+  // Используем фиксированную скорость (без начального движения)
+  const u16 speed = 2400;
 
-  u16 speed = needs_initial_move_ ? 1000 : 2400;
-
-  if (needs_initial_move_) {
-    RCLCPP_INFO(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "Executing initial move to configured positions...");
-  }
-
-  // Prepare arrays for sync write
   std::vector<u8> motor_ids;
   std::vector<s16> positions;
   std::vector<u16> speeds;
   std::vector<u8> accelerations;
 
-  for (size_t i = 0; i < info_.joints.size(); i++) {
-    if (!std::isnan(hw_commands_[i])) {
-      const std::string& joint_name = info_.joints[i].name;
-      int motor_id = motor_ids_[joint_name];
-      bool is_gripper = (joint_name == "gripper");
+  for (size_t i = 0; i < info_.joints.size(); ++i) {
+    double cmd = motors_[i].command_position;
+    if (!std::isnan(cmd)) {
+      const auto & motor = motors_[i];
+      int raw = radiansToRaw(cmd, motor);
 
-      int raw_position = radiansToRaw(hw_commands_[i], motor_calibration_[motor_id], is_gripper);
-
-      motor_ids.push_back(static_cast<u8>(motor_id));
-      positions.push_back(static_cast<s16>(raw_position));
+      motor_ids.push_back(static_cast<u8>(motor.id));
+      positions.push_back(static_cast<s16>(raw));
       speeds.push_back(speed);
       accelerations.push_back(static_cast<u8>(50));
     }
   }
 
-  // Write positions to all motors synchronously
   if (!motor_ids.empty()) {
     servo_driver_.SyncWritePosEx(
-        motor_ids.data(), motor_ids.size(), positions.data(), speeds.data(), accelerations.data());
-  }
-
-  // Clear flag after first write
-  if (needs_initial_move_) {
-    needs_initial_move_ = false;
-    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Initial move command sent.");
+      motor_ids.data(), motor_ids.size(),
+      positions.data(), speeds.data(), accelerations.data());
   }
 
   return hardware_interface::return_type::OK;
 }
 
-bool SOARM101SystemHardware::loadCalibration() {
+// ----------------------------------------------------------------------------
+// loadCalibration
+// ----------------------------------------------------------------------------
+bool SOARM101SystemHardware::loadCalibration()
+{
   if (calibration_file_.empty()) {
-    RCLCPP_INFO(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "No calibration file specified, using default values");
+    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "No calibration file specified, using default values.");
     return true;
   }
 
-  RCLCPP_INFO(
-      rclcpp::get_logger("SOARM101SystemHardware"), "Loading calibration from: %s",
-      calibration_file_.c_str());
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Loading calibration from: %s", calibration_file_.c_str());
 
   std::ifstream file(calibration_file_);
   if (!file.is_open()) {
-    RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"), "Failed to open calibration file: %s",
-        calibration_file_.c_str());
+    RCLCPP_ERROR(rclcpp::get_logger("SOARM101SystemHardware"), "Failed to open calibration file: %s", calibration_file_.c_str());
     return false;
   }
 
-  // Simple YAML parser for calibration file
   std::string line;
-  std::string current_motor;
-  MotorCalibration current_calib = {0, 0, 0, 0};
+  std::string current_motor_name;
+  MotorCalibration current_calib = {0, 0, 0};
+  bool in_block = false;
 
   while (std::getline(file, line)) {
-    // Skip comments and empty lines
-    if (line.empty() || line[0] == '#')
-      continue;
+    // Удаляем пробелы в начале и конце строки
+    size_t start = line.find_first_not_of(" \t");
+    if (start == std::string::npos) continue; // пустая строка
+    std::string trimmed = line.substr(start);
+    size_t end = trimmed.find_last_not_of(" \t");
+    if (end != std::string::npos) trimmed = trimmed.substr(0, end + 1);
 
-    // Check if this is a motor name line (no leading spaces, ends with :)
-    if (line.find_first_not_of(" \t") == 0 && line.back() == ':') {
-      // Save previous motor if exists
-      if (!current_motor.empty() && motor_ids_.count(current_motor) > 0) {
-        int motor_id = motor_ids_[current_motor];
-        motor_calibration_[motor_id] = current_calib;
+    // Пропускаем комментарии
+    if (trimmed.empty() || trimmed[0] == '#') continue;
+
+    // Проверяем, является ли строка именем мотора (заканчивается на ':')
+    if (trimmed.back() == ':') {
+      // Сохраняем предыдущий мотор, если он был
+      if (!current_motor_name.empty()) {
+        auto it = motor_ids_.find(current_motor_name);
+        if (it != motor_ids_.end()) {
+          int motor_id = it->second;
+          for (auto & motor : motors_) {
+            if (motor.id == motor_id) {
+              motor.calibration = current_calib;
+              RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"),
+                  "✅ Applied calibration for motor '%s' (ID %d): range_min=%d, range_max=%d",
+                  current_motor_name.c_str(), motor_id, current_calib.range_min, current_calib.range_max);
+              break;
+            }
+          }
+        } else {
+          RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardware"),
+              "⚠️ Unknown motor name '%s' in calibration file", current_motor_name.c_str());
+        }
       }
 
-      // Start new motor
-      current_motor = line.substr(0, line.length() - 1);
-      current_calib = {0, 0, 0, 0};
+      // Начинаем новый мотор
+      current_motor_name = trimmed.substr(0, trimmed.length() - 1);
+      // Удаляем пробелы вокруг имени (если они были)
+      size_t name_start = current_motor_name.find_first_not_of(" \t");
+      size_t name_end = current_motor_name.find_last_not_of(" \t");
+      if (name_start != std::string::npos && name_end != std::string::npos) {
+        current_motor_name = current_motor_name.substr(name_start, name_end - name_start + 1);
+      }
+      current_calib = {0, 0, 0};
+      in_block = true;
       continue;
     }
 
-    // Parse key-value pairs
-    size_t colon_pos = line.find(':');
-    if (colon_pos != std::string::npos) {
-      std::string key = line.substr(0, colon_pos);
-      std::string value = line.substr(colon_pos + 1);
-
-      // Trim whitespace
-      key.erase(0, key.find_first_not_of(" \t"));
-      key.erase(key.find_last_not_of(" \t") + 1);
-      value.erase(0, value.find_first_not_of(" \t"));
-      value.erase(value.find_last_not_of(" \t") + 1);
-
-      if (key == "id")
-        current_calib.id = std::stoi(value);
-      else if (key == "drive_mode")
-        current_calib.drive_mode = std::stoi(value);
-      else if (key == "range_min")
-        current_calib.range_min = std::stoi(value);
-      else if (key == "range_max")
-        current_calib.range_max = std::stoi(value);
-    }
-  }
-
-  // Save last motor
-  if (!current_motor.empty() && motor_ids_.count(current_motor) > 0) {
-    int motor_id = motor_ids_[current_motor];
-    motor_calibration_[motor_id] = current_calib;
-  }
-
-  file.close();
-
-  RCLCPP_INFO(
-      rclcpp::get_logger("SOARM101SystemHardware"), "Successfully loaded calibration for %zu motors",
-      motor_calibration_.size());
-
-  return true;
-}
-
-bool SOARM101SystemHardware::loadInitialPositions() {
-  if (initial_positions_file_.empty()) {
-    RCLCPP_INFO(
-        rclcpp::get_logger("SOARM101SystemHardware"),
-        "No initial positions file specified, will start from current positions");
-    return true;
-  }
-
-  RCLCPP_INFO(
-      rclcpp::get_logger("SOARM101SystemHardware"), "Loading initial positions from: %s",
-      initial_positions_file_.c_str());
-
-  std::ifstream file(initial_positions_file_);
-  if (!file.is_open()) {
-    RCLCPP_ERROR(
-        rclcpp::get_logger("SOARM101SystemHardware"), "Failed to open initial positions file: %s",
-        initial_positions_file_.c_str());
-    return false;
-  }
-
-  // Simple YAML parser for initial_positions section
-  std::string line;
-  bool in_initial_positions_section = false;
-
-  while (std::getline(file, line)) {
-    // Skip comments and empty lines
-    if (line.empty() || line[0] == '#')
-      continue;
-
-    // Check if we're entering the initial_positions section
-    if (line.find("initial_positions:") != std::string::npos) {
-      in_initial_positions_section = true;
-      continue;
-    }
-
-    // Exit if we encounter another top-level section
-    if (in_initial_positions_section && line.find_first_not_of(" \t") == 0 && line.back() == ':') {
-      break;
-    }
-
-    // Parse joint positions (indented lines with :)
-    if (in_initial_positions_section) {
-      size_t colon_pos = line.find(':');
+    // Если мы внутри блока, парсим параметры
+    if (in_block && !current_motor_name.empty()) {
+      size_t colon_pos = trimmed.find(':');
       if (colon_pos != std::string::npos) {
-        std::string joint_name = line.substr(0, colon_pos);
-        std::string value = line.substr(colon_pos + 1);
-
-        // Trim whitespace
-        joint_name.erase(0, joint_name.find_first_not_of(" \t"));
-        joint_name.erase(joint_name.find_last_not_of(" \t") + 1);
+        std::string key = trimmed.substr(0, colon_pos);
+        std::string value = trimmed.substr(colon_pos + 1);
+        // Убираем пробелы
+        key.erase(0, key.find_first_not_of(" \t"));
+        key.erase(key.find_last_not_of(" \t") + 1);
         value.erase(0, value.find_first_not_of(" \t"));
-
-        // Remove comments from value
-        size_t comment_pos = value.find('#');
-        if (comment_pos != std::string::npos) {
-          value = value.substr(0, comment_pos);
-        }
         value.erase(value.find_last_not_of(" \t") + 1);
 
-        // Check if this joint is valid
-        if (motor_ids_.count(joint_name) > 0) {
-          initial_positions_[joint_name] = std::stod(value);
-          RCLCPP_INFO(
-              rclcpp::get_logger("SOARM101SystemHardware"), "  %s: %.3f rad", joint_name.c_str(),
-              initial_positions_[joint_name]);
+        if (key == "drive_mode") {
+          current_calib.drive_mode = std::stoi(value);
+        } else if (key == "range_min") {
+          current_calib.range_min = std::stoi(value);
+        } else if (key == "range_max") {
+          current_calib.range_max = std::stoi(value);
         }
       }
     }
   }
 
+  // Сохраняем последний мотор
+  if (!current_motor_name.empty()) {
+    auto it = motor_ids_.find(current_motor_name);
+    if (it != motor_ids_.end()) {
+      int motor_id = it->second;
+      for (auto & motor : motors_) {
+        if (motor.id == motor_id) {
+          motor.calibration = current_calib;
+          RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"),
+              "✅ Applied calibration for motor '%s' (ID %d): range_min=%d, range_max=%d",
+              current_motor_name.c_str(), motor_id, current_calib.range_min, current_calib.range_max);
+          break;
+        }
+      }
+    } else {
+      RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardware"),
+          "⚠️ Unknown motor name '%s' in calibration file", current_motor_name.c_str());
+    }
+  }
+
   file.close();
-
-  RCLCPP_INFO(
-      rclcpp::get_logger("SOARM101SystemHardware"),
-      "Successfully loaded initial positions for %zu joints", initial_positions_.size());
-
+  RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Calibration loading finished.");
   return true;
 }
-
+// ----------------------------------------------------------------------------
+// rawToRadians
+// ----------------------------------------------------------------------------
 double SOARM101SystemHardware::rawToRadians(
-    int raw_position, const MotorCalibration& calib, bool is_gripper) {
-  // Clamp to calibration range (no homing offset applied)
+  int raw_position, const Motor & motor)
+{
+  const auto & calib = motor.calibration;
+  // Ограничиваем сырым диапазоном
   int clamped = std::max(calib.range_min, std::min(calib.range_max, raw_position));
 
-  // Normalize to [0, 1] based on calibrated range
+  // Нормализуем в [0,1]
   double progress = static_cast<double>(clamped - calib.range_min) /
                     static_cast<double>(calib.range_max - calib.range_min);
 
-  // Get URDF limits for each joint
-  // TODO: Load these from URDF dynamically in on_configure()
+  // URDF-ограничения (жёстко зашиты, в будущем можно загружать из параметров)
   double urdf_lower, urdf_upper;
-  if (calib.id == 1) {  // shoulder_pan
-    urdf_lower = -1.91986;
-    urdf_upper = 1.91986;
-  } else if (calib.id == 2) {  // shoulder_lift
-    urdf_lower = -1.74533;
-    urdf_upper = 1.74533;
-  } else if (calib.id == 3) {  // elbow_flex
-    urdf_lower = -1.74533;
-    urdf_upper = 1.5708;
-  } else if (calib.id == 4) {  // wrist_flex
-    urdf_lower = -1.65806;
-    urdf_upper = 1.65806;
-  } else if (calib.id == 5) {  // wrist_roll
-    urdf_lower = -2.79253;
-    urdf_upper = 2.79253;
-  } else if (calib.id == 6) {  // gripper - use radians like other joints!
-    urdf_lower = -0.1745;
-    urdf_upper = 1.4483;
-  } else {
-    urdf_lower = -M_PI;
-    urdf_upper = M_PI;
+  switch (motor.id) {
+    case 1:  // shoulder_pan
+      urdf_lower = -1.91986;
+      urdf_upper =  1.91986;
+      break;
+    case 2:  // shoulder_lift
+      urdf_lower = -1.74533;
+      urdf_upper =  1.74533;
+      break;
+    case 3:  // elbow_flex
+      urdf_lower = -1.74533;
+      urdf_upper =  1.5708;
+      break;
+    case 4:  // wrist_flex
+      urdf_lower = -1.65806;
+      urdf_upper =  1.65806;
+      break;
+    case 5:  // wrist_roll
+      urdf_lower = -2.79253;
+      urdf_upper =  2.79253;
+      break;
+    case 6:  // gripper
+      urdf_lower = -0.1745;
+      urdf_upper =  1.4483;
+      break;
+    default:
+      urdf_lower = -M_PI;
+      urdf_upper =  M_PI;
+      break;
   }
 
-  // Scale to URDF limits (radians for ALL joints, including gripper)
   return progress * (urdf_upper - urdf_lower) + urdf_lower;
 }
 
+// ----------------------------------------------------------------------------
+// radiansToRaw
+// ----------------------------------------------------------------------------
 int SOARM101SystemHardware::radiansToRaw(
-    double radians, const MotorCalibration& calib, bool is_gripper) {
-  // Get URDF limits for each joint
-  // TODO: Load these from URDF dynamically in on_configure()
+  double radians, const Motor & motor)
+{
+  const auto & calib = motor.calibration;
+
+  // URDF-ограничения
   double urdf_lower, urdf_upper;
-  if (calib.id == 1) {  // shoulder_pan
-    urdf_lower = -1.91986;
-    urdf_upper = 1.91986;
-  } else if (calib.id == 2) {  // shoulder_lift
-    urdf_lower = -1.74533;
-    urdf_upper = 1.74533;
-  } else if (calib.id == 3) {  // elbow_flex
-    urdf_lower = -1.74533;
-    urdf_upper = 1.5708;
-  } else if (calib.id == 4) {  // wrist_flex
-    urdf_lower = -1.65806;
-    urdf_upper = 1.65806;
-  } else if (calib.id == 5) {  // wrist_roll
-    urdf_lower = -2.79253;
-    urdf_upper = 2.79253;
-  } else if (calib.id == 6) {  // gripper - use radians like other joints!
-    urdf_lower = -0.1745;
-    urdf_upper = 1.4483;
-  } else {
-    urdf_lower = -M_PI;
-    urdf_upper = M_PI;
+  switch (motor.id) {
+    case 1:
+      urdf_lower = -1.91986;
+      urdf_upper =  1.91986;
+      break;
+    case 2:
+      urdf_lower = -1.74533;
+      urdf_upper =  1.74533;
+      break;
+    case 3:
+      urdf_lower = -1.74533;
+      urdf_upper =  1.5708;
+      break;
+    case 4:
+      urdf_lower = -1.65806;
+      urdf_upper =  1.65806;
+      break;
+    case 5:
+      urdf_lower = -2.79253;
+      urdf_upper =  2.79253;
+      break;
+    case 6:
+      urdf_lower = -0.1745;
+      urdf_upper =  1.4483;
+      break;
+    default:
+      urdf_lower = -M_PI;
+      urdf_upper =  M_PI;
+      break;
   }
 
-  // Clamp to URDF limits
-  double clamped_radians = std::min(urdf_upper, std::max(urdf_lower, radians));
+  // Клэмпим в URDF-диапазон
+  double clamped = std::min(urdf_upper, std::max(urdf_lower, radians));
 
-  // Normalize to [0, 1]
-  double progress = (clamped_radians - urdf_lower) / (urdf_upper - urdf_lower);
+  // Нормализуем в [0,1]
+  double progress = (clamped - urdf_lower) / (urdf_upper - urdf_lower);
 
-  // Scale to motor range
-  int raw_position =
-      static_cast<int>(progress * (calib.range_max - calib.range_min) + calib.range_min);
+  // Масштабируем на сырой диапазон
+  int raw = static_cast<int>(progress * (calib.range_max - calib.range_min) + calib.range_min);
 
-  // Return raw position directly (no homing offset)
-  return raw_position;
+  return raw;
+}
+
+
+void SOARM101SystemHardware::moveToParkPosition()
+{
+    if (park_positions_.size() != info_.joints.size()) {
+        RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardware"), 
+                    "Park positions not set or size mismatch, skipping.");
+        return;
+    }
+
+    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), 
+                "Moving to park position...");
+
+    // Устанавливаем команды в парковочную позицию
+    for (size_t i = 0; i < info_.joints.size(); ++i) {
+        motors_[i].command_position = park_positions_[i];
+    }
+
+    // Отправляем команды (как в write, но с пониженной скоростью)
+    const u16 speed = 1200;  // медленнее, чем обычно (2400)
+    const u8 accel = 30;     // меньше ускорение
+
+    std::vector<u8> motor_ids;
+    std::vector<s16> positions;
+    std::vector<u16> speeds;
+    std::vector<u8> accelerations;
+
+    for (size_t i = 0; i < info_.joints.size(); ++i) {
+        double cmd = motors_[i].command_position;
+        if (!std::isnan(cmd)) {
+            const auto & motor = motors_[i];
+            int raw = radiansToRaw(cmd, motor);
+            motor_ids.push_back(static_cast<u8>(motor.id));
+            positions.push_back(static_cast<s16>(raw));
+            speeds.push_back(speed);
+            accelerations.push_back(accel);
+        }
+    }
+
+    if (!motor_ids.empty()) {
+        servo_driver_.SyncWritePosEx(
+            motor_ids.data(), motor_ids.size(),
+            positions.data(), speeds.data(), accelerations.data());
+    }
+
+    // Ждём завершения движения (с таймаутом)
+    const int timeout_seconds = 10;
+    const int sleep_ms = 50;
+    int elapsed = 0;
+    bool all_stopped = false;
+
+    while (elapsed < timeout_seconds * 1000) {
+        bool moving = false;
+        for (size_t i = 0; i < info_.joints.size(); ++i) {
+            int motor_id = motors_[i].id;
+            if (servo_driver_.FeedBack(motor_id) != 0) {
+                int moving_flag = servo_driver_.ReadMove(motor_id);
+                motors_[i].sensors.moving_flag = static_cast<double>(moving_flag);
+                if (moving_flag != 0) {
+                    moving = true;
+                }
+            }
+        }
+
+        if (!moving) {
+            all_stopped = true;
+            break;
+        }
+
+        rclcpp::sleep_for(std::chrono::milliseconds(sleep_ms));
+        elapsed += sleep_ms;
+    }
+
+    if (all_stopped) {
+        RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), 
+                    "Park position reached.");
+    } else {
+        RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardware"), 
+                    "Park position timeout after %d seconds, continuing.", timeout_seconds);
+    }
 }
 
 }  // namespace soarm101_hardware

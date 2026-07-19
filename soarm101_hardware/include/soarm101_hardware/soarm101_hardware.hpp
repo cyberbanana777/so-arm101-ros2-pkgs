@@ -30,17 +30,14 @@
 
 #include "SCServo.h"
 
+#define ENABLE_SERVO  1
+#define DISABLE_SERVO 0
+
+#define FAIL_CODE 0
+#define SUCSESS_CODE 1
+
 namespace soarm101_hardware
 {
-
-// Motor calibration data structure
-struct MotorCalibration
-{
-  int id;
-  int drive_mode;
-  int range_min;
-  int range_max;
-};
 
 class SOARM101SystemHardware : public hardware_interface::SystemInterface
 {
@@ -73,43 +70,56 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  // Parameters
+  // ------------------- Структуры данных -------------------
+  struct MotorSensor
+  {
+    double position = 0.0;
+    double velocity = 0.0;
+    double effort   = 0.0;
+    double temperature = 0.0;
+    double voltage  = 0.0;
+    double current  = 0.0;
+    double moving_flag = 0.0;   // интерфейс требует double
+  };
+
+  // Калибровка мотора (без id – берём из Motor)
+  struct MotorCalibration
+  {
+    int drive_mode;
+    int range_min;    // минимальный сырой отсчёт энкодера
+    int range_max;    // максимальный сырой отсчёт
+  };
+
+  // Агрегатор всех данных по одному мотору
+  struct Motor
+  {
+    int id;                     // ID мотора (1..6)
+    std::string joint_name;     // имя сустава из URDF
+    double command_position;    // целевая позиция в радианах
+    MotorSensor sensors;        // все показания с датчиков
+    MotorCalibration calibration; // калибровочные параметры
+  };
+
+  // ------------------- Параметры из конфига -------------------
   std::string port_;
+  int         baudrate_;
   std::string calibration_file_;
-  std::string initial_positions_file_;
+  // Парковочная позиция (радианы) в порядке info_.joints
+  std::vector<double> park_positions_;
 
-  // Joint state
-  std::vector<double> hw_positions_;
-  std::vector<double> hw_velocities_;
-  std::vector<double> hw_commands_;
-  std::vector<double> hw_efforts_;      
-  std::vector<double> hw_temperatures_;
-  std::vector<double> hw_voltages_;     
-  std::vector<double> hw_currents_;
-  std::vector<bool>   hw_moving_;
+  // ------------------- Данные по моторам -------------------
+  std::vector<Motor> motors_;          // индекс соответствует порядку в info_.joints
+  std::map<std::string, int> motor_ids_;  // имя сустава -> ID мотора (только для загрузки калибровки)
 
-  // C++ SCServo SDK
+  // ------------------- Драйвер -------------------
   SMS_STS servo_driver_;
   bool driver_initialized_;
 
-  // Initial pose flag
-  bool needs_initial_move_;
-  int initial_move_cycles_remaining_;
-
-  // Motor ID mapping (joint name -> motor ID)
-  std::map<std::string, int> motor_ids_;
-
-  // Calibration data (motor ID -> calibration)
-  std::map<int, MotorCalibration> motor_calibration_;
-
-  // Initial positions (joint name -> radians)
-  std::map<std::string, double> initial_positions_;
-
-  // Helper methods
+  // ------------------- Вспомогательные методы -------------------
   bool loadCalibration();
-  bool loadInitialPositions();
-  double rawToRadians(int raw_position, const MotorCalibration& calib, bool is_gripper);
-  int radiansToRaw(double radians, const MotorCalibration& calib, bool is_gripper);
+  double rawToRadians(int raw_position, const Motor & motor);
+  int radiansToRaw(double radians, const Motor & motor);
+  void moveToParkPosition();
 };
 
 }  // namespace soarm101_hardware
