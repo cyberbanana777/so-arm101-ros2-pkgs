@@ -15,6 +15,9 @@ setup(
         (
             os.path.join("share", package_name, "launch"),
             glob("launch/*.launch.py"),
+        ),        (
+            os.path.join("share", package_name, "urdf"),
+            glob("urdf/*.xacro"),
         ),
     ],
     install_requires=['setuptools'],

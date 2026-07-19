@@ -354,15 +354,4 @@
     <limit effort="10" velocity="10" lower="-1.91986" upper="1.91986"/>
   </joint>
 
-  <!--=================== ROS2_CONTROL & PLUGINS ===================-->
-  <!-- Выбор варианта в зависимости от аргумента use_sim -->
-  <xacro:if value="$(arg use_sim)">
-    <!-- СИМУЛЯЦИЯ -->
-    <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_sim.xacro"/>
-  </xacro:if>
-  <xacro:unless value="$(arg use_sim)">
-    <!-- РЕАЛЬНЫЙ РОБОТ -->
-    <xacro:include filename="package://soarm101_description/urdf/ros2_control_real.xacro"/>
-  </xacro:unless>
-
 </robot>

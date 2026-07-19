@@ -5,7 +5,7 @@
     <hardware>
       <plugin>soarm101_hardware/SOARM101Hardware</plugin>
       <!-- Параметры, передаваемые в ваш плагин -->
-      <param name="port">/dev/ttyUSB0</param>
+      <param name="port">/dev/ttyACM0</param>
       <param name="baudrate">1000000</param>
       <!-- другие параметры -->
     </hardware>
@@ -35,7 +35,7 @@
       <state_interface name="position"/>
       <state_interface name="velocity"/>
     </joint>
-    <joint name="gripper_joint">
+    <joint name="gripper_jaw_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
