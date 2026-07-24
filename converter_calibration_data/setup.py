@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'soarm101_bringup'
+package_name = 'converter_calibration_data'
 
 setup(
     name=package_name,
@@ -13,19 +13,15 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (
-            os.path.join("share", package_name, "launch"),
-            glob("launch/*.launch.py"),
-        ),
-        (
-            os.path.join("share", package_name, "urdf"),
-            glob("urdf/*.xacro"),
+            os.path.join("share", package_name, "config"),
+            glob("config/*.yaml"),
         ),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='banana-killer',
     maintainer_email='sashagrachev2005@gmail.com',
-    description='Launch files and configurations for SO-ARM101',
+    description='Pkg with calibration data and scripts for fast adaptation and deploy.',
     license='MIT',
     extras_require={
         'test': [
@@ -34,6 +30,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'lerobot_to_custom_format = converter_calibration_data.lerobot_to_custom_format:main'
         ],
     },
 )

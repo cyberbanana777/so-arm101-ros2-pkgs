@@ -6,6 +6,11 @@
 ## *.scservo_sdk
 - Подготовить документацию к пакету (написать что это такое, откуда взято)
 
+## *.converter_calibration_data
+- Create docs about pkg (purpose, apps, config files)
+- Add link to lerobot docs (in `README` and `HOW_TO_USE`)
+- Add adiction arguments for run `lerobot-calibrate` 
+
 
 ## 0.soarm101_bringup
 - Проверить пакет по списку
