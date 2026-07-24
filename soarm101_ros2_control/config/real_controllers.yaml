@@ -1,7 +1,8 @@
 controller_manager:
   ros__parameters:
-    update_rate: 100  # например, под реальный цикл управления
+    update_rate: 100
     use_sim_time: false
+    # ========================================
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -12,6 +13,7 @@ controller_manager:
     gripper_controller:
       type: position_controllers/GripperActionController
 
+# ===== КОНТРОЛЛЕРЫ (без изменений) =====
 joint_trajectory_controller:
   ros__parameters:
     joints:

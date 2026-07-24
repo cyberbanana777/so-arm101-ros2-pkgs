@@ -7,6 +7,9 @@
       <!-- Параметры, передаваемые в ваш плагин -->
       <param name="port">/dev/ttyACM0</param>
       <param name="baudrate">1000000</param>
+      <param name="default_speed">2400</param>
+      <param name="default_accel">50</param>
+      <param name="park_positions">[0.004, -1.712, 1.560, 0.748, -0.029, 0.461]</param>
       <param name="calibration_file">$(find soarm101_ros2_control)/config/motor_calibration.yaml</param>
       <!-- другие параметры -->
     </hardware>

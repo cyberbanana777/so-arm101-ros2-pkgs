@@ -11,6 +11,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   pluginlib
   rclcpp
   rclcpp_lifecycle
+  std_srvs 
 )
 
 find_package(ament_cmake REQUIRED)
@@ -61,6 +62,8 @@ install(TARGETS soarm101_hardware
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
+
+install(FILES LICENSE NOTICE DESTINATION share/${PROJECT_NAME}/)
 
 ## Тестирование (если будет)
 if(BUILD_TESTING)
