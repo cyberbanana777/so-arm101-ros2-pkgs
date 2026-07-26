@@ -13,6 +13,7 @@
 
 ## *.README
 - Написать README к репозиторию
+- create the graph of dependensies
 
 ## *.soarm101_description
 - Create docs about pkg (purpose, apps, config files)
@@ -34,6 +35,7 @@ ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
 
 ## 0.soarm101_bringup
 - Проверить пакет по списку
+
 
 ## 1.soarm101_controller
 - Написать свой контроллер

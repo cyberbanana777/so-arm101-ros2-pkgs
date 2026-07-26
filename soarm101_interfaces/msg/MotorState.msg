@@ -1,0 +1,9 @@
+int32 motor_id
+string joint_name
+float64 position
+float64 velocity
+float64 effort
+float64 temperature
+float64 voltage
+float64 current
+bool moving_flag
