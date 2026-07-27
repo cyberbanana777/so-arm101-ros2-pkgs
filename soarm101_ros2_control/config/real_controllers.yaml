@@ -12,6 +12,9 @@ controller_manager:
 
     gripper_controller:
       type: position_controllers/GripperActionController
+    
+    soarm101_telemetry_controller:
+      type: soarm101_telemetry_controller/ServoTelemetryController
 
 # ===== КОНТРОЛЛЕРЫ (без изменений) =====
 joint_trajectory_controller:
@@ -36,3 +39,22 @@ gripper_controller:
     state_interfaces:
       - position
       - velocity
+
+soarm101_telemetry_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_flex_joint
+      - wrist_flex_joint
+      - wrist_roll_joint
+      - gripper_jaw_joint
+    motor_ids: [1, 2, 3, 4, 5, 6]
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+      - temperature
+      - voltage
+      - current
+      - moving_flag

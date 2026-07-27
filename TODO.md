@@ -36,13 +36,10 @@ ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
 ## 0.soarm101_bringup
 - Проверить пакет по списку
 
-
-## 1.soarm101_controller
-- Написать свой контроллер
-- Проверить работу
+## 0.soarm101_controller
 - Проверить пакет по списку
 
-## 2.soarm101_moveit_config
+## 1.soarm101_moveit_config
 - Настроить конфигурацию moveit2, чтобы IK-решать корректно работал. 
 
 

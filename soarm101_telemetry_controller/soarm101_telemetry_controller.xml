@@ -1,0 +1,9 @@
+<library path="soarm101_telemetry_controller">
+  <class name="soarm101_telemetry_controller/ServoTelemetryController"
+         type="soarm101_telemetry_controller::ServoTelemetryController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Reads servo states from state interfaces and publishes as soarm101_interfaces/MotorStates.
+    </description>
+  </class>
+</library>

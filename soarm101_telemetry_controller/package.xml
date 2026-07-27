@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>soarm101_controller</name>
+  <name>soarm101_telemetry_controller</name>
   <version>1.0.0</version>
   <description>Custom ROS 2 controllers for SO-ARM101 telemetry</description>
   <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
@@ -14,7 +14,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>realtime_tools</depend>
-  <depend>std_msgs</depend>
+  <depend>soarm101_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
