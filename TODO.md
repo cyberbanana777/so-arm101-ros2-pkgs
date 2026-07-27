@@ -33,13 +33,11 @@ ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
 ## *.soarm101_bringup
 - Create docs about pkg (purpose, apps, config files)
 
-
-## 0.soarm101_ros2_control
-- Настроить конфиг для симуляции (посмотреть, может его можно улучшить)
-- Проверить пакет по списку
+## *.soarm101_ros2_control
 - Create docs about pkg (purpose, apps, config files)
 
-## 1.soarm101_moveit_config
+
+## 0.soarm101_moveit_config
 - Настроить конфигурацию moveit2, чтобы IK-решать корректно работал. 
 
 

@@ -3,7 +3,7 @@
 <package format="3">
   <name>soarm101_ros2_control</name>
   <version>1.0.0</version>
-  <description>ROS2_control configs for SO-ARM101 for simulation (Gazebo/Ignition) and real robot</description>
+  <description>ROS2_control configs for SO-ARM101 for simulation (Gazebo/Ignition) and real robot (custom hardware component)</description>
   <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
   <license>MIT</license>
 
