@@ -27,6 +27,8 @@ ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
 ```
 - Проверить пакет по списку
 
+## *.soarm101_controller
+- Create docs about pkg (purpose, apps, config files)
 
 ## 0.soarm101_ros2_control
 - Настроить конфиг для симуляции (посмотреть, может его можно улучшить)
@@ -34,9 +36,6 @@ ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
 - Create docs about pkg (purpose, apps, config files)
 
 ## 0.soarm101_bringup
-- Проверить пакет по списку
-
-## 0.soarm101_controller
 - Проверить пакет по списку
 
 ## 1.soarm101_moveit_config

@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
+// SPDX-License-Identifier: MIT
+// Details in the LICENSE file in the root of the package.
+
 #include "soarm101_telemetry_controller/soarm101_telemetry_controller.hpp"
 
 #include <algorithm>
