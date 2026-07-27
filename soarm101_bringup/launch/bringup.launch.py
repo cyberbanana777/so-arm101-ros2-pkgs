@@ -91,7 +91,9 @@ def launch_setup(context, *args, **kwargs):
             jtc,
             gripper
         ]
+
     else:
+        # Real world
         controllers_yaml = os.path.join(pkg_soarm101_ros2_control, 'config', 'real_controllers.yaml')
         control_node = Node(
             package='controller_manager',

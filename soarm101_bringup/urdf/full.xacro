@@ -5,9 +5,7 @@
   <xacro:arg name="use_sim" default="true"/>
 
   <!-- URDF_description of SOARM101 -->
-
   <xacro:include filename="$(find soarm101_description)/urdf/soarm101.xacro"/>
-  
 
   <!--=================== ROS2_CONTROL & PLUGINS ===================-->
   <!-- Выбор варианта в зависимости от аргумента use_sim -->
