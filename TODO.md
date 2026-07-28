@@ -28,12 +28,11 @@
 - check README
 - Настроить конфигурацию moveit2, чтобы IK-решать корректно работал. 
 
+## soarm101_bringup
+- check README
 
-## *.soarm101_bringup
-- Create docs about pkg (purpose, apps, config files)
 
 ## *.soarm101_nodes
-- Настроить более простые examples
 - Add rqt_trajectory_controller for simple 
 ```bash
 ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle

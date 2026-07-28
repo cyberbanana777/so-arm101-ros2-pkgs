@@ -27,7 +27,6 @@ def launch_setup(context, *args, **kwargs):
     use_sim = LaunchConfiguration('use_sim').perform(context)
     pkg_soarm101_bringup = get_package_share_directory('soarm101_bringup')
     pkg_soarm101_ros2_control = get_package_share_directory('soarm101_ros2_control')
-    pkg_soarm101_odometry_controller = get_package_share_directory('soarm101_odometry_controller')
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
     # 1. Разбираем xacro в строку
