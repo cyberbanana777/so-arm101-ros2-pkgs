@@ -1,7 +1,7 @@
 # TODO list of this repo
 
-## *.README
-- create the stracture of programms levels
+## README
+- create the structure of programms levels
 
 ## soarm101_interfaces
 
@@ -18,13 +18,12 @@
 ## soarm101_hardware
 - Проверить документацию
 
-## *.soarm101_telemetry_controller
+## soarm101_telemetry_controller
 - Проверить документацию
 
+## soarm101_ros2_control
+- Проверить документацию
 
-
-## *.soarm101_ros2_control
-- Create docs about pkg (purpose, apps, config files)
 
 ## 0.soarm101_moveit_config
 - Настроить конфигурацию moveit2, чтобы IK-решать корректно работал. 
