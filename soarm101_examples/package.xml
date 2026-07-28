@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>soarm101_nodes</name>
-  <version>0.0.0</version>
-  <description>Nodes for simple motion control of SO-ARM101</description>
+  <name>soarm101_examples</name>
+  <version>1.0.0</version>
+  <description>Example nodes for simple motion control of SO-ARM101</description>
   <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
   <license>MIT</license>
 
@@ -13,6 +13,7 @@
   <depend>rclcpp_action</depend>
   <depend>trajectory_msgs</depend>
   <depend>control_msgs</depend>
+  <depend>rqt_joint_trajectory_controller</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

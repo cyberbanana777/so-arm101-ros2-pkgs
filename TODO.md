@@ -31,13 +31,8 @@
 ## soarm101_bringup
 - check README
 
-
-## *.soarm101_nodes
-- Add rqt_trajectory_controller for simple 
-```bash
-ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
-```
-- Проверить пакет по списку
+## soarm101_examples
+- check README
 
 
 Везде перевести комментарии на английский.
