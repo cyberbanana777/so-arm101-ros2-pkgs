@@ -54,7 +54,7 @@ def callback(msg: MotorStates):
     for motor in msg.motors:
         print(f"Motor {motor.motor_id}: pos={motor.position:.3f}")
 
-sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/motor_states', callback, 10) # 'motor_states' как пример топика
+sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/motor_states', callback, 10)
 ```
 
 ---
@@ -75,4 +75,4 @@ sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/moto
 
 ## Поддержка
 
-Вопросы и предложения оформляйте через [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues) (ссылка актуальна для вашего репозитория).
+Вопросы и предложения оформляйте через [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues).
