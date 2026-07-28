@@ -7,19 +7,18 @@
 ## soarm101_interfaces
 - Проверить документацию
 
-## *.converter_calibration_data
+## converter_calibration_data
 - Проверить документацию
 
-## *.scservo_sdk
+## scservo_sdk
 - Проверить документацию
 
-## *.soarm101_description
+## soarm101_description
 - Проверить документацию
 
+## soarm101_hardware
+- Проверить документацию
 
-
-## *.soarm101_hardware
-- Подготовить документацию к пакету
 
 ## *.soarm101_telemetry_controller
 - Create docs about pkg (purpose, apps, config files)
