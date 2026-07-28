@@ -18,7 +18,7 @@
 
 ---
 
-## Использование в других пакетах
+## Для использования в других пакетах
 
 Пакет не содержит исполняемых узлов, только описательные файлы. Для загрузки модели робота в ROS2 используйте стандартные средства:
 
@@ -42,9 +42,9 @@ urdf::Model model;
 model.initParam("robot_description");
 ```
 
-### В RViz / MoveIt
+### В RViz / MoveIt / Gazebo
 
-Пакет автоматически устанавливает файлы в `share/soarm101_description/`, поэтому пути к мешам внутри URDF используют `package://soarm101_description/meshes/...`, что корректно разрешается в ROS2.
+Пакет автоматически устанавливает файлы в `share/soarm101_description/`, поэтому пути к мешам внутри URDF используют `package://soarm101_description/meshes/...`, что корректно разрешается в ROS2. Для использования в Gazebo в launch-файле запуска симуляции происходит дополниетльная обработка URDF.
 
 ---
 
@@ -63,9 +63,9 @@ model.initParam("robot_description");
 
 ## Происхождение
 
-Исходный URDF-файл взят из официального репозитория [TheRobotStudio/SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100) (файл `Simulation/SO101/so101_new_calib.urdf`).  
+Исходный URDF-файл взят из репозитория [TheRobotStudio/SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100) (файл `Simulation/SO101/so101_new_calib.urdf`).  
 Внесены следующие изменения:
-- адаптация под наш стек (добавлены инерции, уточнены позиции и ориентации),
+- адаптация под наш стек (добавлен линк world и world_to_base_joint),
 - переход на xacro для удобства параметризации,
 - приведены в соответствие имена суставов и звеньев для интеграции с `ros2_control` и `soarm101_hardware`.
 
