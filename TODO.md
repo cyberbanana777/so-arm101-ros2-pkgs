@@ -13,7 +13,7 @@
 
 
 ## soarm101_description
-- check README
+
 
 ## soarm101_hardware
 - check README
