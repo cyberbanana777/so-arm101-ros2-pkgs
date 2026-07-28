@@ -1,14 +1,13 @@
 # TODO list of this repo
 
 ## *.README
-- Провеприть README к репозиторию
-- create the graph of dependensies
+- create the stracture of programms levels
 
 ## soarm101_interfaces
-- Проверить документацию
+
 
 ## converter_calibration_data
-- Проверить документацию
+
 
 ## scservo_sdk
 - Проверить документацию
