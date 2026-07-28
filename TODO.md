@@ -19,9 +19,10 @@
 ## soarm101_hardware
 - Проверить документацию
 
-
 ## *.soarm101_telemetry_controller
-- Create docs about pkg (purpose, apps, config files)
+- Проверить документацию
+
+
 
 ## *.soarm101_ros2_control
 - Create docs about pkg (purpose, apps, config files)
