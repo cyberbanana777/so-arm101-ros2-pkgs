@@ -13,12 +13,10 @@
 ## *.scservo_sdk
 - Проверить документацию
 
-
-
-
 ## *.soarm101_description
-- Create docs about pkg (purpose, apps, config files)
-- Add link to lerobot docs (in `README` https://github.com/TheRobotStudio/SO-ARM100/tree/main)
+- Проверить документацию
+
+
 
 ## *.soarm101_hardware
 - Подготовить документацию к пакету
