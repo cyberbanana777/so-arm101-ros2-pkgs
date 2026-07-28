@@ -1,6 +1,6 @@
 # converter_calibration_data
 
-Пакет содержит утилиту для преобразования калибровочных данных робота SOARM101 из формата библиотеки **lerobot** (JSON) в кастомный YAML-формат, используемый в остальных пакетах стека.
+Пакет содержит утилиту для преобразования калибровочных данных робота SOARM101 из формата библиотеки **lerobot** (JSON) в кастомный YAML-формат.
 
 ---
 
@@ -17,7 +17,8 @@
 pip install -r pip_requirements.txt
 ```
 
-Требуется только `pyyaml`.
+Устанавливает библиотеки:
+- `pyyaml`.
 
 ---
 
@@ -45,8 +46,8 @@ python3 lerobot_to_custom_format.py ./my_awesome_follower_arm.json ../config/mot
 ```
 
 **Аргументы:**
-- `input.json` – путь к JSON-файлу от lerobot.
-- `output.yaml` – путь, куда сохранить итоговый YAML-конфиг (рекомендуется положить в `../config/motor_calibration.yaml`).
+- `./my_awesome_follower_arm.json .json` – путь к JSON-файлу от lerobot.
+- `../config/motor_calibration.yaml.yaml` – путь, куда сохранить итоговый YAML-конфиг (рекомендуется положить в `../config/motor_calibration.yaml`).
 
 После успешного выполнения вы получите файл вида:
 
@@ -70,7 +71,7 @@ colcon build --packages-select converter_calibration_data
 source install/local_setup.bash
 ```
 
-Теперь калибровочные данные готовы к использованию в полном стеке.
+Теперь калибровочные данные доступны для использования другими компонентами ПО.
 
 ---
 
