@@ -10,23 +10,23 @@
 
 
 ## scservo_sdk
-- Проверить документацию
 
 ## soarm101_description
-- Проверить документацию
+- check README
 
 ## soarm101_hardware
-- Проверить документацию
+- check README
 
 ## soarm101_telemetry_controller
-- Проверить документацию
+- check README
 
 ## soarm101_ros2_control
-- Проверить документацию
+- check README
 
-
-## 0.soarm101_moveit_config
+## soarm101_moveit_config
+- check README
 - Настроить конфигурацию moveit2, чтобы IK-решать корректно работал. 
+
 
 ## *.soarm101_bringup
 - Create docs about pkg (purpose, apps, config files)
