@@ -10,11 +10,11 @@
 ## *.converter_calibration_data
 - Проверить документацию
 
-
-
-
 ## *.scservo_sdk
-- Подготовить документацию к пакету (написать что это такое, откуда взято)
+- Проверить документацию
+
+
+
 
 ## *.soarm101_description
 - Create docs about pkg (purpose, apps, config files)
@@ -42,4 +42,8 @@
 ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controlle
 ```
 - Проверить пакет по списку
+
+
+Везде перевести комментарии на английский.
+Получить детальные пояснения насчёт CMakeLists.txt для scservo_sdk.
 

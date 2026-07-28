@@ -65,7 +65,7 @@ install(
   INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 
-# Копируем все заголовки в папку include/soarm101_sdk
+# Копируем все заголовки в папку include/soarm10_sdk
 install(
   DIRECTORY scservo_sdk/
   DESTINATION include/${PROJECT_NAME}
