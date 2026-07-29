@@ -47,7 +47,7 @@ python3 lerobot_to_custom_format.py ./my_awesome_follower_arm.json ../config/mot
 
 **Аргументы:**
 - `./my_awesome_follower_arm.json .json` – путь к JSON-файлу от lerobot.
-- `../config/motor_calibration.yaml.yaml` – путь, куда сохранить итоговый YAML-конфиг (рекомендуется положить в `../config/motor_calibration.yaml`).
+- `../config/motor_calibration.yaml.yaml` – путь, куда сохранить итоговый YAML-конфиг (для корректной работы в стеке необходимо положить в `../config/motor_calibration.yaml` относительно директории скрипта).
 
 После успешного выполнения вы получите файл вида:
 
