@@ -7,6 +7,7 @@
 
 ## scservo_sdk
 - check license requirements (Alice)
+- analyze the details of CMakeFiles.txt
 
 
 ## soarm101_description
@@ -16,8 +17,6 @@
 ## soarm101_hardware
 - check README (Alice)
 - check license requirements (Alice) 
-- translate comments into English (Alex)
-- create README.md translated into English (Alex) 
 - add convertation undetermined units of effort to N*m (Alex)
 
 
@@ -37,7 +36,7 @@
 
 ## soarm101_moveit_config
 - check README (Alice)
-- Настроить конфигурацию moveit2, чтобы IK-решать корректно работал. 
+- Setup config moveit2 with working IK solver. 
 - translate comments into English (Alex)
 - create README.md translated into English (Alex) 
 
@@ -54,7 +53,3 @@
 - check README (Alice)
 - translate comments into English (Alex)
 - create README.md translated into English (Alex) 
-
-
-Получить детальные пояснения насчёт CMakeLists.txt для scservo_sdk.
-

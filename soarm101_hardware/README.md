@@ -38,7 +38,7 @@
 |----------|-----|----------|--------|
 | `port` | string | Путь к последовательному порту | `/dev/ttyACM0` |
 | `baudrate` | int | Скорость в бод (обычно 1000000) | `1000000` |
-| `calibration_file` | string | Путь к YAML-файлу калибровки (относительно корня workspace или абсолютный) | `$(find-pkg-prefix soarm101_description)/config/motor_calibration.yaml` |
+| `calibration_file` | string | Путь к YAML-файлу калибровки (относительно корня workspace или абсолютный) | `$(find-pkg-prefix converter_calibration_data)/config/motor_calibration.yaml` |
 | `default_speed` | int | Скорость движения по умолчанию (0–3400) | `2400` |
 | `default_accel` | int | Ускорение по умолчанию (0–254) | `50` |
 | `park_positions` | список double | Парковочная позиция в радианах для каждого сустава в порядке `joints` | `[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]` |

@@ -46,7 +46,7 @@
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-// Для удобства
+// For convenience
 using hardware_interface::HW_IF_POSITION;
 using hardware_interface::HW_IF_VELOCITY;
 using hardware_interface::HW_IF_EFFORT;
@@ -76,13 +76,13 @@ SOARM101SystemHardware::on_init(const hardware_interface::HardwareInfo & info)
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // --- Порт ---
+  // --- Port ---
   port_ = info_.hardware_parameters["port"];
   if (port_.empty()) {
     port_ = "/dev/ttyACM0";
   }
 
-  // --- Скорость ---
+  // --- Baud rate ---
   std::string baudrate_str = info_.hardware_parameters["baudrate"];
   if (baudrate_str.empty()) {
     baudrate_ = 1000000;
@@ -90,24 +90,24 @@ SOARM101SystemHardware::on_init(const hardware_interface::HardwareInfo & info)
     baudrate_ = std::stoi(baudrate_str);
   }
 
-  // --- Файл калибровки ---
+  // --- Calibration file ---
   calibration_file_ = info_.hardware_parameters["calibration_file"];
 
-  // --- Скорость по умолчанию ---
+  // --- Default speed ---
   std::string speed_str = info_.hardware_parameters["default_speed"];
   if (!speed_str.empty()) {
     default_speed_ = static_cast<u16>(std::stoi(speed_str));
     RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "default_speed = %d", default_speed_);
   }
 
-  // --- Ускорение по умолчанию ---
+  // --- Default acceleration ---
   std::string accel_str = info_.hardware_parameters["default_accel"];
   if (!accel_str.empty()) {
     default_accel_ = static_cast<u8>(std::stoi(accel_str));
     RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "default_accel = %d", default_accel_);
   }
 
-  // --- Парковочная позиция ---
+  // --- Park position ---
   std::string park_str = info_.hardware_parameters["park_positions"];
   if (!park_str.empty()) {
     park_positions_ = parseParkPositions(park_str);
@@ -121,7 +121,7 @@ SOARM101SystemHardware::on_init(const hardware_interface::HardwareInfo & info)
     }
   }
 
-  // --- Маппинг имён ---
+  // --- Name mapping ---
   motor_ids_["shoulder_pan_joint"]   = 1;
   motor_ids_["shoulder_lift_joint"]  = 2;
   motor_ids_["elbow_flex_joint"]     = 3;
@@ -162,7 +162,7 @@ SOARM101SystemHardware::on_configure(const rclcpp_lifecycle::State & /*previous_
 {
   RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Configuring...");
 
-  // --- Загрузка калибровки ---
+  // --- Load calibration ---
   if (!calibration_file_.empty() && !loadCalibration()) {
     RCLCPP_ERROR(
       rclcpp::get_logger("SOARM101SystemHardware"),
@@ -170,7 +170,7 @@ SOARM101SystemHardware::on_configure(const rclcpp_lifecycle::State & /*previous_
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // --- Подключение к шине ---
+  // --- Connect to bus ---
   if (!servo_driver_.begin(baudrate_, port_.c_str())) {
     RCLCPP_ERROR(
       rclcpp::get_logger("SOARM101SystemHardware"),
@@ -179,7 +179,7 @@ SOARM101SystemHardware::on_configure(const rclcpp_lifecycle::State & /*previous_
   }
   driver_initialized_ = true;
 
-  // --- Инициализация команд ---
+  // --- Initialise commands ---
   for (size_t i = 0; i < motors_.size(); ++i) {
     auto & motor = motors_[i];
     if (std::isnan(motor.sensors.position)) {
@@ -270,14 +270,14 @@ SOARM101SystemHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous
 {
   RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "Deactivating...");
 
-  // --- Парковка ---
+  // --- Park ---
   if (!park_positions_.empty()) {
     moveToParkPosition();
   } else {
     RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), "No park position set, skipping movement.");
   }
 
-  // --- Отключение момента ---
+  // --- Disable torque ---
   for (const auto & pair : motor_ids_) {
     int motor_id = pair.second;
     if (servo_driver_.EnableTorque(motor_id, DISABLE_SERVO) == 0) {
@@ -424,7 +424,7 @@ bool SOARM101SystemHardware::loadCalibration()
     }
   }
 
-  // Сохраняем последний мотор
+  // Save the last motor
   if (!current_motor_name.empty()) {
     auto it = motor_ids_.find(current_motor_name);
     if (it != motor_ids_.end()) {
@@ -546,12 +546,12 @@ void SOARM101SystemHardware::moveToParkPosition()
   RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardware"), 
               "Moving to park position...");
 
-  // Устанавливаем команды
+  // Set commands
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     motors_[i].command_position = park_positions_[i];
   }
 
-  // Отправляем команды с пониженной скоростью
+  // Send commands with reduced speed
   const u16 speed = default_speed_ / 2;
   const u8 accel = default_accel_ / 2;
 
@@ -580,7 +580,7 @@ void SOARM101SystemHardware::moveToParkPosition()
         positions.data(), speeds.data(), accelerations.data());
   }
 
-  // Ждём завершения движения (таймаут 10 секунд)
+  // Wait for movement completion (timeout 10 seconds)
   const int timeout_ms = 10000;
   const int sleep_ms = 50;
   int elapsed_ms = 0;
@@ -621,14 +621,14 @@ std::vector<double> SOARM101SystemHardware::parseParkPositions(const std::string
 {
   std::vector<double> result;
   std::string s = str;
-  // Удаляем квадратные скобки, если есть
+  // Remove square brackets if present
   if (s.front() == '[' && s.back() == ']') {
     s = s.substr(1, s.length() - 2);
   }
   std::stringstream ss(s);
   std::string token;
   while (std::getline(ss, token, ',')) {
-    // Убираем пробелы
+    // Remove spaces
     token.erase(0, token.find_first_not_of(" \t"));
     token.erase(token.find_last_not_of(" \t") + 1);
     if (!token.empty()) {

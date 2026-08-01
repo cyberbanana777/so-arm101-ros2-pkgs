@@ -53,29 +53,29 @@
 #define ENABLE_SERVO  1
 #define DISABLE_SERVO 0
 #define NUM_MOTORS 6
-//! Макрос для включения сервопривода (Enable Torque)
+//! Macro to enable servo (Enable Torque)
 #define ENABLE_SERVO  1
-//! Макрос для отключения сервопривода (Disable Torque)
+//! Macro to disable servo (Disable Torque)
 #define DISABLE_SERVO 0
-//! Количество моторов в роботе (фиксированное)
+//! Fixed number of motors in the robot
 #define NUM_MOTORS 6
 
 namespace soarm101_hardware
 {
 
 /**
- * @brief Главный класс аппаратного интерфейса для робота SO-ARM101.
+ * @brief Main hardware interface class for the SO-ARM101 robot.
  * 
- * Реализует hardware_interface::SystemInterface для управления 6 сервоприводами
- * Feetech STS через последовательный порт. Предоставляет интерфейсы состояния
- * (позиция, скорость, усилие, температура, напряжение, ток, флаг движения)
- * и команды (позиция).
+ * Implements hardware_interface::SystemInterface for controlling 6 Feetech STS
+ * servos via a serial port. Provides state interfaces (position, velocity,
+ * effort, temperature, voltage, current, moving flag) and command interfaces
+ * (position).
  * 
- * Основные возможности:
- * - Загрузка калибровки из YAML-файла.
- * - Парковочная позиция при деактивации.
- * - Настраиваемые скорость и ускорение.
- * - Оптимизированные преобразования raw ↔ радианы.
+ * Key features:
+ * - Loads calibration from YAML file.
+ * - Park position on deactivation.
+ * - Configurable default speed and acceleration.
+ * - Optimised raw ↔ radian conversions.
  */
 class SOARM101SystemHardware : public hardware_interface::SystemInterface
 {
@@ -83,229 +83,229 @@ public:
   RCLCPP_SHARED_PTR_DEFINITIONS(SOARM101SystemHardware)
 
   /**
-   * @brief Конструктор. Инициализирует флаги.
+   * @brief Constructor. Initialises flags.
    */
   SOARM101SystemHardware();
 
   /**
-   * @brief Деструктор. Отключает драйвер, если он был инициализирован.
+   * @brief Destructor. Disconnects the driver if initialised.
    */
   ~SOARM101SystemHardware();
 
-  // ==================== Методы, переопределяемые из SystemInterface ====================
+  // ==================== Overridden methods from SystemInterface ====================
 
   /**
-   * @brief Инициализация компонента.
-   * @param info Структура HardwareInfo с параметрами из ROS 2.
-   * @return SUCCESS при успехе, иначе ERROR.
+   * @brief Initialisation of the component.
+   * @param info HardwareInfo structure with parameters from ROS 2.
+   * @return SUCCESS on success, otherwise ERROR.
    * 
-   * Вызывается один раз при загрузке плагина. Читает параметры порта,
-   * скорости, файла калибровки, а также пользовательские параметры
-   * default_speed, default_accel, park_positions. Создаёт структуры для моторов.
+   * Called once when the plugin is loaded. Reads port, baud rate, calibration file,
+   * as well as user parameters default_speed, default_accel, park_positions.
+   * Creates motor structures.
    */
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareInfo & info) override;
 
   /**
-   * @brief Конфигурация компонента.
-   * @param previous_state Состояние до конфигурации (не используется).
-   * @return SUCCESS при успехе, иначе ERROR.
+   * @brief Configuration of the component.
+   * @param previous_state State before configuration (not used).
+   * @return SUCCESS on success, otherwise ERROR.
    * 
-   * Загружает калибровку, подключается к последовательному порту,
-   * инициализирует команды текущими позициями.
+   * Loads calibration, connects to the serial port, initialises commands with
+   * current positions.
    */
   hardware_interface::CallbackReturn on_configure(
     const rclcpp_lifecycle::State & previous_state) override;
 
   /**
-   * @brief Экспорт интерфейсов состояния (чтение данных с моторов).
-   * @return Вектор StateInterface, содержащий указатели на поля sensors каждого мотора.
+   * @brief Export state interfaces (reading data from motors).
+   * @return Vector of StateInterface pointers to sensor fields of each motor.
    * 
-   * Экспортирует: position, velocity, effort, temperature, voltage, current, moving_flag.
+   * Exports: position, velocity, effort, temperature, voltage, current, moving_flag.
    */
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
   /**
-   * @brief Экспорт интерфейсов команд (запись данных на моторы).
-   * @return Вектор CommandInterface, содержащий указатели на command_position каждого мотора.
+   * @brief Export command interfaces (writing data to motors).
+   * @return Vector of CommandInterface pointers to command_position of each motor.
    * 
-   * Экспортирует только position (позиционный режим).
+   * Exports only position (position control mode).
    */
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
   /**
-   * @brief Активация компонента.
-   * @param previous_state Состояние до активации (не используется).
-   * @return SUCCESS при успехе, иначе ERROR.
+   * @brief Activation of the component.
+   * @param previous_state State before activation (not used).
+   * @return SUCCESS on success, otherwise ERROR.
    * 
-   * Включает момент на всех моторах, читает текущие позиции и устанавливает
-   * команды равными текущим позициям для предотвращения рывков.
+   * Enables torque on all motors, reads current positions and sets commands
+   * equal to current positions to prevent jerks.
    */
   hardware_interface::CallbackReturn on_activate(
     const rclcpp_lifecycle::State & previous_state) override;
 
   /**
-   * @brief Деактивация компонента.
-   * @param previous_state Состояние до деактивации (не используется).
-   * @return SUCCESS при успехе, иначе ERROR.
+   * @brief Deactivation of the component.
+   * @param previous_state State before deactivation (not used).
+   * @return SUCCESS on success, otherwise ERROR.
    * 
-   * Если задана парковочная позиция, перемещает робота в неё (с пониженной скоростью),
-   * затем отключает момент на всех моторах.
+   * If a park position is set, moves the robot to it (with reduced speed),
+   * then disables torque on all motors.
    */
   hardware_interface::CallbackReturn on_deactivate(
     const rclcpp_lifecycle::State & previous_state) override;
 
   /**
-   * @brief Чтение данных с моторов.
-   * @param time Текущее время (не используется).
-   * @param period Период (не используется).
-   * @return return_type::OK всегда.
+   * @brief Read data from motors.
+   * @param time Current time (not used).
+   * @param period Period (not used).
+   * @return return_type::OK always.
    * 
-   * Вызывается циклически (обычно 100 Гц). Обновляет поля sensors.position и др.
+   * Called cyclically (usually 100 Hz). Updates sensors.position etc.
    */
   hardware_interface::return_type read(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
   /**
-   * @brief Запись команд на моторы.
-   * @param time Текущее время (не используется).
-   * @param period Период (не используется).
-   * @return return_type::OK всегда.
+   * @brief Write commands to motors.
+   * @param time Current time (not used).
+   * @param period Period (not used).
+   * @return return_type::OK always.
    * 
-   * Вызывается циклически. Отправляет команды позиции синхронно с использованием
-   * SyncWritePosEx. Скорость и ускорение задаются параметрами default_speed_ и default_accel_.
+   * Called cyclically. Sends position commands synchronously using SyncWritePosEx.
+   * Speed and acceleration are taken from default_speed_ and default_accel_.
    */
   hardware_interface::return_type write(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  // ==================== Вложенные структуры ====================
+  // ==================== Nested structures ====================
 
   /**
-   * @brief Показания датчиков одного мотора.
+   * @brief Sensor readings of a single motor.
    */
   struct MotorSensor
   {
-    double position = 0.0;      ///< Текущая позиция, радианы
-    double velocity = 0.0;      ///< Текущая скорость, рад/с
-    double effort   = 0.0;      ///< Текущее усилие (нагрузка), условные единицы
-    double temperature = 0.0;   ///< Температура мотора, °C
-    double voltage  = 0.0;      ///< Напряжение питания, В
-    double current  = 0.0;      ///< Ток, А
-    double moving_flag = 0.0;   ///< Флаг движения (0 – стоп, 1 – движется)
+    double position = 0.0;      ///< Current position, radians
+    double velocity = 0.0;      ///< Current velocity, rad/s
+    double effort   = 0.0;      ///< Current effort (load), arbitrary units
+    double temperature = 0.0;   ///< Motor temperature, °C
+    double voltage  = 0.0;      ///< Supply voltage, V
+    double current  = 0.0;      ///< Current, A
+    double moving_flag = 0.0;   ///< Motion flag (0 – stopped, 1 – moving)
   };
 
   /**
-   * @brief Параметры калибровки мотора.
+   * @brief Motor calibration parameters.
    * 
-   * Содержит как сырые пределы (range_min, range_max), так и предвычисленные
-   * коэффициенты для быстрого преобразования raw ↔ радианы.
+   * Contains raw limits (range_min, range_max) and precomputed coefficients
+   * for fast raw ↔ radian conversion.
    */
   struct MotorCalibration
   {
-    int drive_mode;                 ///< Режим работы мотора (не используется)
-    int range_min;                  ///< Минимальное сырое значение энкодера
-    int range_max;                  ///< Максимальное сырое значение энкодера
-    double raw_to_rad_scale;        ///< Коэффициент для преобразования raw->радианы
-    double raw_to_rad_offset;       ///< Смещение для преобразования raw->радианы
-    double rad_to_raw_scale;        ///< Коэффициент для преобразования радианы->raw
-    double rad_to_raw_offset;       ///< Смещение для преобразования радианы->raw
-    double urdf_lower;              ///< Нижний предел из URDF, радианы
-    double urdf_upper;              ///< Верхний предел из URDF, радианы
+    int drive_mode;                 ///< Motor drive mode (not used)
+    int range_min;                  ///< Minimum raw encoder value
+    int range_max;                  ///< Maximum raw encoder value
+    double raw_to_rad_scale;        ///< Scale for raw->radians conversion
+    double raw_to_rad_offset;       ///< Offset for raw->radians conversion
+    double rad_to_raw_scale;        ///< Scale for radians->raw conversion
+    double rad_to_raw_offset;       ///< Offset for radians->raw conversion
+    double urdf_lower;              ///< Lower limit from URDF, radians
+    double urdf_upper;              ///< Upper limit from URDF, radians
   };
 
   /**
-   * @brief Агрегированная структура для одного мотора.
+   * @brief Aggregated structure for one motor.
    * 
-   * Содержит всю информацию: идентификатор, имя, целевую команду,
-   * показания датчиков и калибровку.
+   * Contains all information: ID, name, target command, sensor readings,
+   * and calibration.
    */
   struct Motor
   {
-    int id;                         ///< Идентификатор мотора (1..6)
-    std::string joint_name;         ///< Имя сустава из URDF
-    double command_position = 0.0;  ///< Целевая позиция, радианы
-    MotorSensor sensors;            ///< Показания датчиков
-    MotorCalibration calibration;   ///< Калибровочные параметры
+    int id;                         ///< Motor ID (1..6)
+    std::string joint_name;         ///< Joint name from URDF
+    double command_position = 0.0;  ///< Target position, radians
+    MotorSensor sensors;            ///< Sensor readings
+    MotorCalibration calibration;   ///< Calibration parameters
   };
 
-  // ==================== Члены класса ====================
+  // ==================== Class members ====================
 
-  //! Параметры из конфигурации
-  std::string port_;                ///< Последовательный порт (например, /dev/ttyACM0)
-  int         baudrate_;            ///< Скорость передачи, бод
-  std::string calibration_file_;    ///< Путь к файлу калибровки YAML
+  //! Parameters from configuration
+  std::string port_;                ///< Serial port (e.g., /dev/ttyACM0)
+  int         baudrate_;            ///< Baud rate
+  std::string calibration_file_;    ///< Path to YAML calibration file
 
-  //! Параметры, загружаемые из info_.hardware_parameters
-  u16 default_speed_ = 2400;        ///< Скорость по умолчанию для записи
-  u8  default_accel_ = 50;          ///< Ускорение по умолчанию для записи
-  std::vector<double> park_positions_; ///< Парковочная позиция (радианы) в порядке info_.joints
+  //! Parameters loaded from info_.hardware_parameters
+  u16 default_speed_ = 2400;        ///< Default speed for writing
+  u8  default_accel_ = 50;          ///< Default acceleration for writing
+  std::vector<double> park_positions_; ///< Park position (radians) in info_.joints order
 
-  //! Данные по моторам
-  std::vector<Motor> motors_;       ///< Вектор структур Motor, размер = info_.joints.size()
-  std::map<std::string, int> motor_ids_; ///< Маппинг имени сустава -> ID мотора
+  //! Motor data
+  std::vector<Motor> motors_;       ///< Vector of Motor structures, size = info_.joints.size()
+  std::map<std::string, int> motor_ids_; ///< Mapping joint name -> motor ID
 
-  //! Драйвер SCServo SDK
+  //! SCServo SDK driver
   SMS_STS servo_driver_;
-  bool driver_initialized_;         ///< Флаг успешного подключения к драйверу
+  bool driver_initialized_;         ///< Flag indicating successful driver connection
 
-  // ==================== Приватные методы ====================
+  // ==================== Private methods ====================
 
   /**
-   * @brief Загрузка калибровки из YAML-файла.
-   * @return true при успехе, false при ошибке.
+   * @brief Load calibration from YAML file.
+   * @return true on success, false on error.
    * 
-   * Парсит файл, имена суставов должны совпадать с ключами в motor_ids_.
-   * Для каждого мотора вызывает updateCalibrationCoefficients().
+   * Parses the file; joint names must match keys in motor_ids_.
+   * For each motor calls updateCalibrationCoefficients().
    */
   bool loadCalibration();
 
   /**
-   * @brief Вычисление предварительных коэффициентов для быстрого преобразования.
-   * @param motor Ссылка на структуру Motor, у которой будет обновлена calibration.
+   * @brief Precompute coefficients for fast conversion.
+   * @param motor Reference to Motor structure whose calibration will be updated.
    * 
-   * Определяет URDF-лимиты на основе motor.id, затем вычисляет raw_to_rad_scale и др.
+   * Determines URDF limits based on motor.id, then computes raw_to_rad_scale etc.
    */
   void updateCalibrationCoefficients(Motor & motor);
 
   /**
-   * @brief Чтение данных с одного мотора.
-   * @param index Индекс в векторе info_.joints и motors_.
+   * @brief Read data from a single motor.
+   * @param index Index in info_.joints and motors_ vectors.
    * 
-   * Вызывает FeedBack, затем ReadPos, ReadSpeed и т.д., заполняет sensors.
+   * Calls FeedBack, then ReadPos, ReadSpeed, etc., fills sensors.
    */
   void readMotorData(size_t index);
 
   /**
-   * @brief Преобразование сырого значения энкодера в радианы.
-   * @param raw_position Сырое значение (0-4095).
-   * @param motor Ссылка на Motor, содержащий калибровку.
-   * @return Угол в радианах.
+   * @brief Convert raw encoder value to radians.
+   * @param raw_position Raw value (0-4095).
+   * @param motor Reference to Motor containing calibration.
+   * @return Angle in radians.
    * 
-   * Использует предвычисленные коэффициенты из motor.calibration.
+   * Uses precomputed coefficients from motor.calibration.
    */
   double rawToRadians(int raw_position, const Motor & motor);
 
   /**
-   * @brief Преобразование радиан в сырое значение энкодера.
-   * @param radians Угол в радианах.
-   * @param motor Ссылка на Motor, содержащий калибровку.
-   * @return Сырое значение (0-4095), клиппированное по URDF-лимитам.
+   * @brief Convert radians to raw encoder value.
+   * @param radians Angle in radians.
+   * @param motor Reference to Motor containing calibration.
+   * @return Raw value (0-4095), clipped to URDF limits.
    */
   int radiansToRaw(double radians, const Motor & motor);
 
   /**
-   * @brief Перемещение робота в парковочную позицию.
+   * @brief Move the robot to the park position.
    * 
-   * Устанавливает command_position из park_positions_, отправляет команды
-   * с половинной скоростью/ускорением, затем ждёт завершения движения (таймаут 10 с).
+   * Sets command_position from park_positions_, sends commands with half
+   * speed/acceleration, then waits for movement completion (timeout 10 s).
    */
   void moveToParkPosition();
 
   /**
-   * @brief Парсинг строки с массивом чисел для park_positions.
-   * @param str Строка вида "[0.004, -1.712, ...]" или "0.004, -1.712, ..."
-   * @return Вектор чисел double.
+   * @brief Parse a string containing an array of numbers for park_positions.
+   * @param str String like "[0.004, -1.712, ...]" or "0.004, -1.712, ..."
+   * @return Vector of double numbers.
    */
   std::vector<double> parseParkPositions(const std::string & str);
 };
