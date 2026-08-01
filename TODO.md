@@ -11,8 +11,6 @@
 
 ## soarm101_description
 - check license requirements (Alice)
-- translate comments into English (Alex)
-- create README.md translated into English (Alex) 
 
 
 ## soarm101_hardware

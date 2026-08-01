@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(urdf REQUIRED)
 find_package(xacro REQUIRED)
 
-# Устанавливаем все необходимые директории в share/${PROJECT_NAME}
+# Install all export folders at share/${PROJECT_NAME}
 install(
   DIRECTORY
     urdf
