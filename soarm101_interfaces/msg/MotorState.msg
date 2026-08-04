@@ -7,3 +7,5 @@ float64 temperature
 float64 voltage
 float64 current
 bool moving_flag
+float64 max_torque
+bool enable_torque

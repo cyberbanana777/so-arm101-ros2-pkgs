@@ -11,6 +11,8 @@
       <state_interface name="voltage"/>
       <state_interface name="current"/>
       <state_interface name="moving_flag"/>
+      <state_interface name="max_torque"/>
+      <state_interface name="enable_torque"/>
     </joint>
   </xacro:macro>
 
@@ -23,6 +25,8 @@
       <state_interface name="voltage"/>
       <state_interface name="current"/>
       <state_interface name="moving_flag"/>
+      <state_interface name="max_torque"/>
+      <state_interface name="enable_torque"/>
     </joint>
   </xacro:macro>
 

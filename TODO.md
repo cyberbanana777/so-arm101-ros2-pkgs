@@ -26,25 +26,17 @@
 - check README (Alice)
 - create README.md translated into English after Alice's check (Alex) 
 
----
----
----
+## soarm101_telemetry_controller
+- check README (Alice)
+- create README.md translated into English after Alice's check (Alex) 
 
 ## converter_calibration_data
-- add argument `arm_type` for added prefix in the name of outut file. (Alex)
-- rebuild docs. (Alex)
 - check README (Alice)
 - create README.md translated into English after Alice's check (Alex) 
 
-
-## soarm101_telemetry_controller
-- added publishing new fuilds of hw_compoent
-- check README (Alice)
-- translate comments into English (Alex)
-- create README.md translated into English after Alice's check (Alex) 
-
-## soarm101_interfaces
-- add the new fuilds for MotorState.msg
+---
+---
+---
 
 ## soarm101_examples
 - check README (Alice)

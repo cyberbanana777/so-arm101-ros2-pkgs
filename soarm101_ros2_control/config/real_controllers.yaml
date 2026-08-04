@@ -58,3 +58,5 @@ soarm101_telemetry_controller:
       - voltage
       - current
       - moving_flag
+      - max_torque
+      - enable_torque

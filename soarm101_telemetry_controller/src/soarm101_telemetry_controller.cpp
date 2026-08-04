@@ -176,6 +176,12 @@ controller_interface::return_type ServoTelemetryController::update(
       motor.moving_flag = (state_interfaces_[it->second].get_value() > 0.5);
     else
       motor.moving_flag = false;
+
+    it = index_map.find("max_torque");
+    motor.max_torque = (it != index_map.end()) ? state_interfaces_[it->second].get_value() : 0.0;
+
+    it = index_map.find("enable_torque");
+    motor.enable_torque = (it != index_map.end()) ? state_interfaces_[it->second].get_value() : 0.0;
   }
 
   publisher_->publish(msg);
@@ -210,7 +216,7 @@ bool ServoTelemetryController::parse_parameters()
   if (!node->get_parameter("interface_names", interface_names_))
   {
     interface_names_ = {"position", "velocity", "effort", "temperature",
-                        "voltage", "current", "moving_flag"};
+                        "voltage", "current", "moving_flag", "max_torque", "enable_torque" };
     RCLCPP_INFO(node->get_logger(), "Using default interface_names");
   }
   else if (interface_names_.empty())

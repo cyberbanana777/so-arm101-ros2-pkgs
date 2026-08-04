@@ -1,6 +1,6 @@
 # converter_calibration_data
 
-Пакет содержит утилиту для преобразования калибровочных данных робота SOARM101 из формата библиотеки **lerobot** (JSON) в кастомный YAML-формат.
+Пакет содержит утилиту для преобразования калибровочных данных робота SOARM101 из формата библиотеки **lerobot** (JSON) в кастомный YAML-формат, а также готовые примеры конфигурационных файлов для лидера и фолловера.
 
 ---
 
@@ -41,15 +41,15 @@ lerobot-calibrate \
 
 ```bash
 cd converter_calibration_data/converter_calibration_data
-# Пути указываются относительной дириктории
-python3 lerobot_to_custom_format.py ./my_awesome_follower_arm.json ../config/motor_calibration.yaml
+python3 lerobot_to_custom_format.py ./my_awesome_follower_arm.json ../config/motor_calibration.yaml leader
 ```
 
 **Аргументы:**
-- `./my_awesome_follower_arm.json .json` – путь к JSON-файлу от lerobot.
-- `../config/motor_calibration.yaml.yaml` – путь, куда сохранить итоговый YAML-конфиг (для корректной работы в стеке необходимо положить в `../config/motor_calibration.yaml` относительно директории скрипта).
+- `./my_awesome_follower_arm.json` – путь к JSON-файлу от lerobot.
+- `../config/motor_calibration.yaml` – путь, куда сохранить итоговый YAML-конфиг (для корректной работы всего стека необходимо класть в `../config/` относительно директории скрипта).
+- `leader` – префикс, который будет добавлен к имени выходного файла (например, `leader_motor_calibration.yaml`). Это позволяет различать конфигурации для лидера и фолловера. Должен быть или `leader`, или `follower`
 
-После успешного выполнения вы получите файл вида:
+После успешного выполнения вы получите файл вида (в примере — `leader_motor_calibration.yaml`):
 
 ```yaml
 shoulder_pan_joint:
@@ -62,6 +62,8 @@ shoulder_lift_joint:
   range_max: 3209
 ...
 ```
+
+Для фолловера достаточно указать другой префикс, например `follower`, и выходной файл будет назван `follower_motor_calibration.yaml`.
 
 ### 3. Соберите workspace
 
@@ -92,6 +94,12 @@ source install/local_setup.bash
 ## Лицензия
 
 Пакет распространяется под лицензией **MIT** (см. файл [LICENSE](LICENSE) в корне пакета).
+
+---
+
+## Версия
+
+**2.0.0** – изменён интерфейс командной строки: добавлен обязательный аргумент `prefix` для формирования имени выходного файла; обновлена документация.
 
 ---
 

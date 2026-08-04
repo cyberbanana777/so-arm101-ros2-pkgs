@@ -38,7 +38,7 @@ private:
   std::vector<int64_t> motor_ids_;
   std::vector<std::string> interface_names_;
 
-  // Индексы в state_interfaces_ для каждого сустава и имени интерфейса
+  // indexes in the state_interfaces_ for each joint and joint name
   std::vector<std::unordered_map<std::string, size_t>> joint_state_indices_;
 
   rclcpp_lifecycle::LifecyclePublisher<soarm101_interfaces::msg::MotorStates>::SharedPtr publisher_;

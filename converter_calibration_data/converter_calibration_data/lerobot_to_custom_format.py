@@ -21,7 +21,7 @@ import sys
 import yaml
 
 
-def convert_config(input_file: str, output_file: str) -> None:
+def convert_config(input_file: str, output_file: str, prefix:str) -> None:
     """
     Read JSON configuration, transform joint names, and write to YAML.
 
@@ -82,7 +82,7 @@ def convert_config(input_file: str, output_file: str) -> None:
 
     # Write YAML
     try:
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(f"{prefix}_{output_file}", 'w', encoding='utf-8') as f:
             yaml.dump(
                 output_data,
                 f,
@@ -102,19 +102,20 @@ def convert_config(input_file: str, output_file: str) -> None:
 
 def main():
     """Parse command line arguments and run conversion."""
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print("Error: Please specify input JSON and output YAML paths.")
         print(f"Usage: {sys.argv[0]} <input_json> <output_yaml>")
         sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
+    prefix = sys.argv[3]
 
     if not os.path.isfile(input_file):
         print(f"Error: Input file not found: {input_file}")
         sys.exit(1)
 
-    convert_config(input_file, output_file)
+    convert_config(input_file, output_file, prefix)
 
 
 if __name__ == "__main__":

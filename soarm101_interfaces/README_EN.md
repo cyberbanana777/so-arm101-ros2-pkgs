@@ -1,7 +1,7 @@
 # soarm101_interfaces
 
 The package contains custom ROS2 messages for publishing telemetry data of all robot motors.  
-It defines the telemetry data format for all motors and is used by stack nodes.
+It defines the data format for exchange between stack nodes and is used by controllers, hardware components, and visualisation nodes.
 
 ---
 
@@ -13,14 +13,16 @@ Message about the state of a single motor.
 | Field | Type | Description |
 |-------|------|-------------|
 | `motor_id` | `int32` | Motor ID (assigned during initial setup) |
-| `joint_name` | `string` | Joint name (e.g., `"joint1"`) |
+| `joint_name` | `string` | Joint name (e.g., `"shoulder_pan_joint"`) |
 | `position` | `float64` | Current position (radians) |
 | `velocity` | `float64` | Current velocity (rad/s) |
-| `effort` | `float64` | Current effort (arbitrary units; see servo documentation for details) |
+| `effort` | `float64` | Current effort (N·m) |
 | `temperature` | `float64` | Motor temperature (°C) |
 | `voltage` | `float64` | Supply voltage (V) |
 | `current` | `float64` | Current (A) |
 | `moving_flag` | `bool` | Motor state: `true` – motor is moving, `false` – stopped |
+| `max_torque` | `float64` | Maximum torque for this joint (N·m), exported from the `soarm101_hardware` state interfaces |
+| `enable_torque` | `bool` | Torque enable state: `true` – torque enabled, `false` – disabled |
 
 ### `MotorStates.msg`
 Array of all motor states, containing messages of type `MotorState.msg`:
@@ -52,7 +54,9 @@ from soarm101_interfaces.msg import MotorStates
 
 def callback(msg: MotorStates):
     for motor in msg.motors:
-        print(f"Motor {motor.motor_id}: pos={motor.position:.3f}")
+        print(f"Motor {motor.motor_id}: pos={motor.position:.3f}, "
+              f"temp={motor.temperature:.1f}°C, "
+              f"max_torque={motor.max_torque:.2f} N·m")
 
 sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/motor_states', callback, 10)
 ```
@@ -70,6 +74,12 @@ Within the complete SOARM101 stack, the package publishes telemetry to the topic
 ## License
 
 Distributed under the **MIT** license (see [LICENSE](LICENSE) in the repository root).
+
+---
+
+## Version
+
+**2.0.0** – added `max_torque` and `enable_torque` fields.
 
 ---
 

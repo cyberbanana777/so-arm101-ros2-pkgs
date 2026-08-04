@@ -1,7 +1,7 @@
 # soarm101_interfaces
 
 Пакет содержит кастомные сообщения ROS2 для публикации данных телеметрии всех моторов робота.  
-Он определяет формат данных телеметрии для всех моторов и используется узлами стека.
+Он определяет формат данных для обмена между узлами стека и используется контроллерами, hardware-компонентами и узлами визуализации.
 
 ---
 
@@ -13,14 +13,16 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `motor_id` | `int32` | Идентификатор мотора (даётся при первичной настройке) |
-| `joint_name` | `string` | Имя сочленения (например, `"joint1"`) |
+| `joint_name` | `string` | Имя сочленения (например, `"shoulder_pan_joint"`) |
 | `position` | `float64` | Текущее положение (радианы) |
 | `velocity` | `float64` | Текущая скорость (рад/с) |
-| `effort` | `float64` | Текущее усилие (условные ед. см. подробно документацию к сервоприводам) |
+| `effort` | `float64` | Текущее усилие (Н·м) |
 | `temperature` | `float64` | Температура мотора (°C) |
 | `voltage` | `float64` | Напряжение питания (В) |
 | `current` | `float64` | Ток (А) |
 | `moving_flag` | `bool` | Состояние мотора: `true` – мотор движется, `false` – остановлен |
+| `max_torque` | `float64` | Максимальный момент для данного сустава (Н·м), экспортируется из state-интерфейсов `soarm101_hardware` |
+| `enable_torque` | `bool` | Состояние включения момента: `true` – момент включён, `false` – выключен |
 
 ### `MotorStates.msg`
 Массив состояний всех моторов, содержит в себе сообщения типа `MotorState.msg`:
@@ -52,7 +54,9 @@ from soarm101_interfaces.msg import MotorStates
 
 def callback(msg: MotorStates):
     for motor in msg.motors:
-        print(f"Motor {motor.motor_id}: pos={motor.position:.3f}")
+        print(f"Motor {motor.motor_id}: pos={motor.position:.3f}, "
+              f"temp={motor.temperature:.1f}°C, "
+              f"max_torque={motor.max_torque:.2f} N·m")
 
 sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/motor_states', callback, 10)
 ```
@@ -70,6 +74,12 @@ sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/moto
 ## Лицензия
 
 Распространяется под лицензией **MIT** (см. [LICENSE](LICENSE) в корне репозитория).
+
+---
+
+## Версия
+
+**2.0.0** – добавлены поля `max_torque` и `enable_torque`.
 
 ---
 
