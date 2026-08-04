@@ -16,7 +16,7 @@ controller_manager:
     soarm101_telemetry_controller:
       type: soarm101_telemetry_controller/ServoTelemetryController
 
-# ===== КОНТРОЛЛЕРЫ (без изменений) =====
+# ===== CONTROLLERS SETTINGS =====
 joint_trajectory_controller:
   ros__parameters:
     joints:

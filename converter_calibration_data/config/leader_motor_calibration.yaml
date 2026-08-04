@@ -1,0 +1,25 @@
+shoulder_pan_joint:
+  drive_mode: 0
+  range_min: 732
+  range_max: 3459
+shoulder_lift_joint:
+  drive_mode: 0
+  range_min: 824
+  range_max: 3209
+elbow_flex_joint:
+  drive_mode: 0
+  range_min: 866
+  range_max: 3082
+wrist_flex_joint:
+  drive_mode: 0
+  range_min: 866
+  range_max: 3233
+wrist_roll_joint:
+  drive_mode: 0
+  range_min: 0
+  range_max: 4095
+gripper_jaw_joint:
+  drive_mode: 0
+  range_min: 1973
+  range_max: 3462
+

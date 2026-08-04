@@ -14,7 +14,6 @@ find_package(soarm101_telemetry_controller REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-# Устанавливаем все необходимые директории в share/${PROJECT_NAME}
 install(
   DIRECTORY
     config

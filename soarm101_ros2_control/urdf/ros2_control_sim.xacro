@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Плагин для Ignition Gazebo (gz_ros2_control) -->
+  <!-- Plugin for Ignition Gazebo (gz_ros2_control) -->
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>filename="package://soarm101_ros2_control/config/sim_controllers.yaml"</parameters>
@@ -13,7 +13,7 @@
     <hardware>
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
-    <!-- Joints (имена остаются те же) -->
+    <!-- Joints  -->
     <joint name="shoulder_pan_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>

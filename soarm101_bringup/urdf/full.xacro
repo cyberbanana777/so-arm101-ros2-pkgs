@@ -2,20 +2,38 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="soarm101">
 
   <!-- Аргумент выбора режима (sim / real) -->
-  <xacro:arg name="use_sim" default="true"/>
+  <xacro:arg name="use_sim" default="false"/>
+  <xacro:arg name="arm_type" default="follower"/>
+  <xacro:arg name="port" default="/dev/ttyACM0"/>
+  <xacro:arg name="max_speed" default="2400"/>
+  <xacro:arg name="max_accel" default="50"/>
+
+  <xacro:property name="arm_type" value="$(arg arm_type)" />
 
   <!-- URDF_description of SOARM101 -->
   <xacro:include filename="$(find soarm101_description)/urdf/soarm101.xacro"/>
+  <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_real.xacro"/>
+
 
   <!--=================== ROS2_CONTROL & PLUGINS ===================-->
   <!-- Выбор варианта в зависимости от аргумента use_sim -->
   <xacro:if value="$(arg use_sim)">
     <!-- СИМУЛЯЦИЯ -->
     <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_sim.xacro"/>
+
   </xacro:if>
+
   <xacro:unless value="$(arg use_sim)">
     <!-- РЕАЛЬНЫЙ РОБОТ -->
-    <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_real.xacro"/>
+
+    <xacro:if value="${arm_type == 'leader'}">
+      <xacro:soarm101_hardware_leader port="$(arg port)" max_speed="$(arg max_speed)" max_accel="$(arg max_accel)"/>
+    </xacro:if>
+    
+    <xacro:if value="${arm_type == 'follower'}">
+      <xacro:soarm101_hardware_follower port="$(arg port)" max_speed="$(arg max_speed)" max_accel="$(arg max_accel)"/>
+    </xacro:if>
+    
   </xacro:unless>
 
 </robot>

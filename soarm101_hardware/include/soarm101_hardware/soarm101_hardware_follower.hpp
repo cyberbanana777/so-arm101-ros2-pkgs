@@ -31,8 +31,8 @@
 // =============================================================================
 
 
-#ifndef SOARM101_HARDWARE__SOARM101_SYSTEM_HPP_
-#define SOARM101_HARDWARE__SOARM101_SYSTEM_HPP_
+#ifndef SOARM101_HARDWARE_FOLLOWER_SOARM101_SYSTEM_HPP_
+#define SOARM101_HARDWARE_FOLLOWWR_SOARM101_SYSTEM_HPP_
 
 #include <array>
 #include <memory>
@@ -50,17 +50,14 @@
 
 #include "SCServo.h"
 
-#define ENABLE_SERVO  1
-#define DISABLE_SERVO 0
-#define NUM_MOTORS 6
 //! Macro to enable servo (Enable Torque)
-#define ENABLE_SERVO  1
+#define ENABLE_TORQUE  1
 //! Macro to disable servo (Disable Torque)
-#define DISABLE_SERVO 0
+#define DISABLE_TORQUE 0
 //! Fixed number of motors in the robot
 #define NUM_MOTORS 6
 
-namespace soarm101_hardware
+namespace soarm101_hardware_follower
 {
 
 /**
@@ -77,20 +74,20 @@ namespace soarm101_hardware
  * - Configurable default speed and acceleration.
  * - Optimised raw ↔ radian conversions.
  */
-class SOARM101SystemHardware : public hardware_interface::SystemInterface
+class SOARM101SystemHardwareFollower : public hardware_interface::SystemInterface
 {
 public:
-  RCLCPP_SHARED_PTR_DEFINITIONS(SOARM101SystemHardware)
+  RCLCPP_SHARED_PTR_DEFINITIONS(SOARM101SystemHardwareFollower)
 
   /**
    * @brief Constructor. Initialises flags.
    */
-  SOARM101SystemHardware();
+  SOARM101SystemHardwareFollower();
 
   /**
    * @brief Destructor. Disconnects the driver if initialised.
    */
-  ~SOARM101SystemHardware();
+  ~SOARM101SystemHardwareFollower();
 
   // ==================== Overridden methods from SystemInterface ====================
 
@@ -188,11 +185,13 @@ private:
   {
     double position = 0.0;      ///< Current position, radians
     double velocity = 0.0;      ///< Current velocity, rad/s
-    double effort   = 0.0;      ///< Current effort (load), arbitrary units
+    double effort   = 0.0;      ///< Current effort (load), N*m
     double temperature = 0.0;   ///< Motor temperature, °C
     double voltage  = 0.0;      ///< Supply voltage, V
     double current  = 0.0;      ///< Current, A
     double moving_flag = 0.0;   ///< Motion flag (0 – stopped, 1 – moving)
+    double enable_torque = 0.0;
+
   };
 
   /**
@@ -217,13 +216,14 @@ private:
   /**
    * @brief Aggregated structure for one motor.
    * 
-   * Contains all information: ID, name, target command, sensor readings,
-   * and calibration.
+   * Contains all information: ID, name, target command, max torque, flag 'enable torque',
+   * sensor readings, and calibration.
    */
   struct Motor
   {
     int id;                         ///< Motor ID (1..6)
     std::string joint_name;         ///< Joint name from URDF
+    double max_torque = 0.0;        ///< Max torque, N*m
     double command_position = 0.0;  ///< Target position, radians
     MotorSensor sensors;            ///< Sensor readings
     MotorCalibration calibration;   ///< Calibration parameters
@@ -240,6 +240,7 @@ private:
   u16 default_speed_ = 2400;        ///< Default speed for writing
   u8  default_accel_ = 50;          ///< Default acceleration for writing
   std::vector<double> park_positions_; ///< Park position (radians) in info_.joints order
+  std::vector<double> max_torques_; ///< Max torques (N * m)
 
   //! Motor data
   std::vector<Motor> motors_;       ///< Vector of Motor structures, size = info_.joints.size()
@@ -308,8 +309,15 @@ private:
    * @return Vector of double numbers.
    */
   std::vector<double> parseParkPositions(const std::string & str);
+
+  /**
+   * @brief Parse a string containing an array of numbers for max_torques.
+   * @param str String like "[0.004, 1.712, ...]" or "0.004, 1.712, ..."
+   * @return Vector of double numbers.
+   */
+  std::vector<double> parseMaxTorques(const std::string & str);
 };
 
-}  // namespace soarm101_hardware
+}  // namespace soarm101_hardware_LEADER
 
-#endif  // SOARM101_HARDWARE__SOARM101_SYSTEM_HPP_
+#endif  // SOARM101_HARDWARE_LEADER_SOARM101_SYSTEM_HPP_

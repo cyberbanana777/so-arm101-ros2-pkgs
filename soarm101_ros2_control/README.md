@@ -1,100 +1,118 @@
 # soarm101_ros2_control
 
-Пакет содержит конфигурационные файлы для **ros2_control** – как для реального робота SOARM101 (с использованием аппаратного компонента `soarm101_hardware`), так и для симуляции в Gazebo (с использованием `gz_ros2_control`). Также включает xacro‑файлы, которые подключаются в основное URDF‑описание для подстановки правильного hardware‑плагина в зависимости от режима запуска.
+Пакет содержит конфигурационные файлы для **ros2_control** – как для реального робота SOARM101 (с использованием аппаратных плагинов из `soarm101_hardware`), так и для симуляции в Gazebo (с использованием `gz_ros2_control`). Включает xacro‑макросы, которые подключаются в основное URDF‑описание для подстановки правильного hardware‑плагина в зависимости от режима запуска и типа руки (leader/follower).
 
 ---
 
 ## Состав пакета
 
 - **`config/`** – YAML‑конфигурации контроллеров:
-  - `real_controllers.yaml` – для работы с реальным роботом (обновление 100 Гц, отключено симуляционное время, загружаются контроллеры: `joint_state_broadcaster`, `joint_trajectory_controller`, `gripper_controller`, `soarm101_telemetry_controller`).
-  - `sim_controllers.yaml` – для симуляции (обновление 50 Гц, включено `use_sim_time: true`, те же контроллеры, но с параметрами, подходящими для Gazebo).
+  - `real_controllers.yaml` – для работы с реальным роботом (100 Гц, отключено `use_sim_time`). Загружаются контроллеры: `joint_state_broadcaster`, `joint_trajectory_controller` (только для follower), `gripper_controller` (только для follower), `soarm101_telemetry_controller`.
+  - `sim_controllers.yaml` – для симуляции в Gazebo (50 Гц, включено `use_sim_time: true`). Загружаются `joint_state_broadcaster`, `joint_trajectory_controller`, `gripper_controller`.
 
-- **`urdf/`** – xacro‑фрагменты для включения в основной URDF:
-  - `ros2_control_real.xacro` – определяет тег `<ros2_control>` с системным плагином `soarm101_hardware/SOARM101SystemHardware` и всеми необходимыми параметрами (порт, скорость, файл калибровки, парковочная позиция и т.д.). Экспортирует все state‑интерфейсы (position, velocity, effort, temperature, voltage, current, moving_flag) и command‑интерфейс (position).
-  - `ros2_control_sim.xacro` – определяет тег `<ros2_control>` с плагином `gz_ros2_control/GazeboSimSystem` для работы в Gazebo. Экспортирует только position и velocity (для симуляции достаточно).
+- **`urdf/`** – xacro‑макросы для включения в основной URDF:
+  - **`ros2_control_real.xacro`** – содержит макросы для реального робота:
+    - `joint_servo_with_command` – объявляет command и state интерфейсы для follower.
+    - `joint_servo_without_command` – объявляет только state интерфейсы для leader (без команды).
+    - `soarm101_hardware_leader` – макрос для подключения плагина `SOARM101SystemHardwareLeader` с параметрами (порт, скорость, калибровка, парковка, max_torques).
+    - `soarm101_hardware_follower` – макрос для подключения плагина `SOARM101SystemHardwareFollower` с параметрами.
+  - **`ros2_control_sim.xacro`** – макрос для симуляции в Gazebo с плагином `gz_ros2_control/GazeboSimSystem`. Экспортирует только position и velocity.
 
-- **`IMPROVEMENTS_SIM.md`** – документ с рекомендациями по улучшению конфигурации для симуляции: добавление ПИД‑регуляторов, расширение командных интерфейсов, реализация ведомого сочленения для захвата и т.д.
+- **`IMPROVEMENTS_SIM.md`** – документ с рекомендациями по улучшению конфигурации для симуляции: добавление ПИД‑регуляторов, расширение командных интерфейсов, mimic-сочленения и т.д.
 
 ---
 
 ## Использование
 
-**Важно! Информация по использоваию ниже актуальна, если Вы хотите использовать отдельно эти конфигурацинные файлы. Агрегация описаний (геометрического и ros2_control описания робота) происходит в пакете soarm101_brongup**
+**Важно!** Эти конфигурационные файлы предназначены для использования через пакет `soarm101_bringup`, который автоматически выбирает нужный макрос на основе аргумента `arm_type`. Если вы используете их отдельно – следуйте инструкциям ниже.
 
 ### Для реального робота
 
-1. Убедитесь, что файл калибровки (`motor_calibration.yaml`) создан пакетом `converter_calibration_data` и лежит по пути, указанному в `ros2_control_real.xacro` (по умолчанию `$(find converter_calibration_data)/config/motor_calibration.yaml`).
+1. Убедитесь, что файлы калибровки созданы пакетом `converter_calibration_data` и лежат по путям, указанным в макросах:
+   - Для лидера: `leader_motor_calibration.yaml`
+   - Для фолловера: `follower_motor_calibration.yaml`
 
-2. В основном URDF (обычно `soarm101.xacro`) добавьте включение:
-
-```xml
-<xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_real.xacro"/>
-```
+2. В основном URDF (например, `full.xacro` из `soarm101_bringup`) добавьте включение нужного макроса в зависимости от `arm_type`:
+   ```xml
+   <xacro:if value="$(arg arm_type) == 'leader'">
+     <xacro:soarm101_hardware_leader port="$(arg port)" max_speed="$(arg max_speed)" max_accel="$(arg max_accel)"/>
+   </xacro:if>
+   <xacro:if value="$(arg arm_type) == 'follower'">
+     <xacro:soarm101_hardware_follower port="$(arg port)" max_speed="$(arg max_speed)" max_accel="$(arg max_accel)"/>
+   </xacro:if>
+   ```
 
 3. При запуске `ros2_control_node` передайте параметры из `real_controllers.yaml`:
-
-```bash
-ros2 run controller_manager ros2_control_node \
-  --ros-args --params-file $(find soarm101_ros2_control)/config/real_controllers.yaml \
-  -p robot_description:=$(cat $(find soarm101_description)/urdf/soarm101.xacro)
-```
-
-Либо используйте launch‑файлы, где это уже настроено (например, в `soarm101_bringup`).
+   ```bash
+   ros2 run controller_manager ros2_control_node \
+     --ros-args --params-file $(find soarm101_ros2_control)/config/real_controllers.yaml \
+     -p robot_description:=$(cat $(find soarm101_description)/urdf/soarm101.xacro)
+   ```
 
 ### Для симуляции в Gazebo
 
-1. В основном URDF вместо реального подключите симуляционный xacro:
+1. В основном URDF подключите симуляционный макрос:
+   ```xml
+   <xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_sim.xacro"/>
+   ```
 
-```xml
-<xacro:include filename="$(find soarm101_ros2_control)/urdf/ros2_control_sim.xacro"/>
-```
-
-2. Запустите Gazebo с загруженной моделью и контроллер‑менеджером, используя `sim_controllers.yaml`. Не забудьте установить `use_sim_time:=true` во всех узлах.
+2. Запустите Gazebo с загруженной моделью и контроллер-менеджером, используя `sim_controllers.yaml`. Не забудьте установить `use_sim_time:=true`.
 
 ---
 
 ## Параметры, задаваемые в xacro для реального робота
 
-| Параметр | Значение по умолчанию | Описание |
-|----------|-----------------------|----------|
-| `port` | `/dev/ttyACM0` | Последовательный порт для подключения к шине моторов |
-| `baudrate` | `1000000` | Скорость в бод |
-| `default_speed` | `2400` | Скорость движения по умолчанию (0–3400) |
-| `default_accel` | `50` | Ускорение по умолчанию (0–254) |
-| `park_positions` | `[0.004, -1.712, 1.560, 1.141, -0.029, 0.461]` | Парковочная позиция в радианах (соответствует порядку суставов) |
-| `calibration_file` | `$(find converter_calibration_data)/config/motor_calibration.yaml` | Путь к YAML‑файлу калибровки |
+| Параметр | Тип | Описание | Пример |
+|----------|-----|----------|--------|
+| `port` | string | Последовательный порт для подключения к моторам | `/dev/ttyACM0` |
+| `max_speed` | int | Максимальная скорость (0–3400) | `2400` |
+| `max_accel` | int | Максимальное ускорение (0–254) | `50` |
+| `park_positions` | список double | Парковочная позиция в радианах (порядок joints) | `[0.004, -1.712, 1.560, 1.141, -0.029, 0.461]` |
+| `max_torques` | список double | Максимальные моменты для каждого сустава (Н·м) | `[2.94, 2.94, 2.94, 2.94, 2.94, 2.94]` |
+| `calibration_file` | string | Путь к YAML-файлу калибровки | `$(find converter_calibration_data)/config/leader_motor_calibration.yaml` |
 
-Все эти параметры можно изменить прямо в xacro или передать через launch‑файл.
+**Примечание:** для лидера и фолловера используются разные файлы калибровки и разные значения max_torques.
 
 ---
 
 ## Контроллеры, используемые в конфигурациях
 
-- **`joint_state_broadcaster`** – публикует `/joint_states` для визуализации и других узлов.
-- **`joint_trajectory_controller`** – основной контроллер для выполнения траекторий движения (позиционное управление).
-- **`gripper_controller`** – специализированный контроллер для управления схватом (на основе `position_controllers/GripperActionController`).
-- **`soarm101_telemetry_controller`** – кастомный контроллер из пакета `soarm101_telemetry_controller`, публикующий расширенную телеметрию (температура, напряжение, ток и т.д.) в топик `soarm101_telemetry_controller/motor_states`.
+- **`joint_state_broadcaster`** – публикует `/joint_states` для визуализации и других узлов (всегда включён).
+- **`joint_trajectory_controller`** – основной контроллер для выполнения траекторий (включается только для follower).
+- **`gripper_controller`** – контроллер для управления схватом (включается только для follower).
+- **`soarm101_telemetry_controller`** – кастомный контроллер для публикации расширенной телеметрии (всегда включён для реального робота).
+
+---
+
+## Важные замечания
+
+### Для лидера (без управления)
+- **Command интерфейсы не экспортируются** – макрос `joint_servo_without_command` не содержит тегов `<command_interface>`. Поэтому контроллеры управления (например, `joint_trajectory_controller`) **не могут быть загружены** для лидера. Это ожидаемое поведение.
+- **`effort` и `moving_flag` всегда равны 0** – поскольку моторы лидера не получают команд через ros2_control, эти поля остаются нулевыми.
+- Лидер используется только для чтения состояния (телеметрия).
+
+### Для фолловера (с управлением)
+- Экспортируются все интерфейсы (position, velocity, effort, temperature, voltage, current, moving_flag) и command интерфейс (position).
+- Контроллеры управления загружаются и активны.
 
 ---
 
 ## Доработки для симуляции
 
-В файле `IMPROVEMENTS_SIM.md` собраны предложения по улучшению работы в Gazebo:
-- Добавление ПИД‑регуляторов для каждого сустава.
-- Расширение набора командных интерфейсов (velocity, effort).
-- Реализация ведомого сочленения для пальцев захвата.
-- Настройка параметров плагина `gz_ros2_control` (`hold_joints`, `position_proportional_gain`).
-- Правильная настройка `use_sim_time`.
+В файле `IMPROVEMENTS_SIM.md` собраны рекомендации по улучшению работы в Gazebo:
+- Добавление ПИД-регуляторов.
+- Расширение набора командных интерфейсов.
+- Реализация mimic-сочленений.
+- Настройка параметров плагина `gz_ros2_control`.
 
-Эти улучшения помогут добиться более реалистичного поведения робота в симуляции и упростят отладку алгоритмов управления.
+Эти улучшения помогут добиться более реалистичного поведения робота в симуляции.
 
 ---
 
 ## Зависимости
 
-- `soarm101_hardware` – аппаратный компонент для реального робота.
-- `soarm101_description` – URDF‑описание робота.
+- `soarm101_hardware` – аппаратные плагины для реального робота.
+- `soarm101_description` – URDF-описание робота.
 - `soarm101_telemetry_controller` – контроллер телеметрии.
 - (Для симуляции) `gz_ros2_control` – плагин для Gazebo.
 
@@ -103,6 +121,12 @@ ros2 run controller_manager ros2_control_node \
 ## Лицензия
 
 Пакет распространяется под лицензией **MIT** (см. файл [LICENSE](LICENSE) в корне пакета).
+
+---
+
+## Версия
+
+**2.0.0** – добавлена поддержка лидера/фолловера, разделены конфигурации, исправлены зависимости.
 
 ---
 

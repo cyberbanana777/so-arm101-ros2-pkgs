@@ -22,3 +22,4 @@ gripper_jaw_joint:
   drive_mode: 0
   range_min: 1973
   range_max: 3462
+
