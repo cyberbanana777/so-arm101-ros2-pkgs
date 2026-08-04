@@ -34,14 +34,13 @@
 - check README (Alice)
 - create README.md translated into English after Alice's check (Alex) 
 
----
----
----
-
 ## soarm101_examples
 - check README (Alice)
-- translate comments into English (Alex)
 - create README.md translated into English after Alice's check (Alex) 
+
+---
+---
+---
 
 
 ## soarm101_moveit_config

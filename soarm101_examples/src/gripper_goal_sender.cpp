@@ -16,7 +16,7 @@ public:
   GripperGoalSender()
   : Node("gripper_goal_sender")
   {
-    // Параметр: целевая ширина (0.0 – закрыт, ~0.03 – открыт)
+    // Param: target angle (-0.07 – close, ~1.16 – open)
     this->declare_parameter("position", 0.0);
     this->declare_parameter("max_effort", 10.0);
 

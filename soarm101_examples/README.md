@@ -75,7 +75,7 @@ ros2 run soarm101_examples joint_goal_sender \
 
 | Параметр | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
-| `position` | double | 0.0 | Ширина раскрытия схвата (0.0 – полностью закрыт, ~0.03 – открыт) |
+| `position` | double | 0.0 | Целевой угол (-0.07 – полностью закрыт, ~1.16 – открыт) |
 | `max_effort` | double | 10.0 | Максимальное усилие при сжатии |
 
 **Использование:**
@@ -86,7 +86,7 @@ ros2 run soarm101_examples gripper_goal_sender
 
 # Открыть схват
 ros2 run soarm101_examples gripper_goal_sender \
-  --ros-args -p position:=0.03
+  --ros-args -p position:=1.16
 
 # С заданным усилием
 ros2 run soarm101_examples gripper_goal_sender \

@@ -17,18 +17,17 @@ public:
   JointGoalSender()
   : Node("joint_goal_sender")
   {
-    // Объявляем параметры с целевыми углами (в радианах)
+    // params with target angles (rad)
     this->declare_parameter("shoulder_pan", 0.0);
     this->declare_parameter("shoulder_lift", 0.0);
     this->declare_parameter("elbow_flex", 0.0);
     this->declare_parameter("wrist_flex", 0.0);
     this->declare_parameter("wrist_roll", 0.0);
-    this->declare_parameter("goal_time", 2.0);  // время движения
+    this->declare_parameter("goal_time", 2.0);  // move time
 
     action_client_ = rclcpp_action::create_client<FollowJointTrajectory>(
       this, "/joint_trajectory_controller/follow_joint_trajectory");
 
-    // Ждём доступности action-сервера
     if (!action_client_->wait_for_action_server(5s)) {
       RCLCPP_ERROR(this->get_logger(), "Action server not available");
       rclcpp::shutdown();
