@@ -49,16 +49,23 @@
    ```  
 5. **Преобразуйте калибровочные данные** в нужный формат:  
    ```bash
-      cd converter_calibration_data
+      cd converter_calibration_data/converter_calibration_data
       pip install -r pip_requirements.txt
       python3 lerobot_to_custom_format.py </global/path/to/lerobot_calib.json> ../config/motor_calibration.yaml
    ```    
-6. **Соберите workspace** (из корня рабочей области):  
-   ```bash 
+6. **Создайте симлинки для фиксации устройства внутри ОС**. Запустите скрипт и выполняйте инструкции, указанные в нём:
+   ```bash
    cd ../..
+   chmod +x create_udev_rule.sh
+   # имена симлинков должны быть soarm101_follower и soarm101_leader
+   sudo ./create_usev_rule.sh
+   ```
+7. **Соберите workspace** (из корня рабочей области):  
+   ```bash 
+   cd ..
    colcon build
    ```  
-7. **Запустите полный стек** через bringup:  
+8. **Запустите полный стек** через bringup:  
    ```bash
    source install/setup.bash
    ros2 launch soarm101_bringup bringup.launch.py use_sim:=false
@@ -109,7 +116,6 @@
 - Вопросы и предложения оформляйте через [Issues](../../issues).  
 
 ---
-
 
 
 ## Полезные ссылки

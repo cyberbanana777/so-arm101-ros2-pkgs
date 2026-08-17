@@ -1,20 +1,16 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>soarm101_bringup</name>
-  <version>3.0.0</version>
-  <description>Launch files and configurations for SO-ARM101</description>
+  <name>soarm101_teleoperate</name>
+  <version>0.0.0</version>
+  <description>The pkg allow teleoperate follower-arm from leader-arm</description>
   <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
   <license>MIT</license>
 
-  <depend>launch</depend>
-  <depend>launch_ros</depend>
-  <depend>robot_state_publisher</depend>
-  <depend>controller_manager</depend>
-  <depend>soarm101_description</depend>
-  <depend>soarm101_hardware</depend>
-  <depend>soarm101_ros2_control</depend>
-  <depend>soarm101_telemetry_controller</depend>
+  <depend>soarm101_interfaces</depend>
+  <depend>soarm101_bringup</depend>
+  <depend>rviz2</depend>
+  <depend>rclpy</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

@@ -53,7 +53,7 @@ soarm101_bringup/
 
 1. **Разбор xacro** – читает `urdf/full.xacro`, передаёт в него все аргументы (`use_sim`, `arm_type`, `port`, `max_speed`, `max_accel`), получает полную URDF-строку.
 2. **Замена `package://`** – все пути вида `package://soarm101_description/meshes/...` заменяются на абсолютные пути с префиксом `file://`, чтобы Gazebo и другие компоненты могли загрузить меши.
-3. **Запуск `robot_state_publisher`** – публикует `/robot_description` и транслирует `tf`.
+3. **Запуск `robot_state_publisher`** – публикует `<arm_prefix>/robot_description` и транслирует `tf`, где `arm_prefix` может быть или `leader`, или `follower`.
 4. **Ветвление по `use_sim`**:
 
 #### Режим симуляции (`use_sim:=true`)
@@ -169,6 +169,7 @@ ros2 launch soarm101_bringup bringup.launch.py \
 
 ## Версия
 
+**3.0.0** – добавлены префиксы в именах нод и топиков (`leader`, `follower`)
 **2.0.0** – добавлена поддержка leader/follower, новые launch-аргументы, условный запуск контроллеров.
 
 ---

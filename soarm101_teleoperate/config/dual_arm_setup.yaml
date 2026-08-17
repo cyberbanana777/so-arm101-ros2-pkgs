@@ -1,0 +1,35 @@
+# Позиции zero_point_link для каждой руки в мире
+world:
+  leader:
+    translation:
+      x: -0.5
+      y: 0.0
+      z: 0.0
+    rotation:
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+  follower:
+    translation:
+      x: 0.5
+      y: 0.0
+      z: 0.0
+    rotation:
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+
+# Маркеры для идентификации рук (привязываем к zero_point_link)
+markers:
+  leader:
+    text: "Leader"
+    color: [0.0, 1.0, 0.0, 1.0]
+    offset_z: 0.4
+    shape: "diamond"
+    diamond_size: 0.05   # базовый размер ромба
+  follower:
+    text: "Follower"
+    color: [0.0, 0.0, 1.0, 1.0]
+    offset_z: 0.4
+    shape: "diamond"
+    diamond_size: 0.05

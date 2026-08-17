@@ -77,6 +77,12 @@ model.initParam("robot_description");
 
 ---
 
+## Версия
+
+**2.0.0** – изменена точка крепления робота к миру. Было `world`=>`base_link`, стало `zero_point_link`=>`base_link`.
+
+---
+
 ## Поддержка
 
 Вопросы и предложения оформляйте через [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues).

@@ -77,6 +77,10 @@ The package is distributed under the **Apache‑2.0** license (see the [LICENSE]
 
 ---
 
+## Version
+
+**2.0.0** – The robot's attachment point to the world has been changed. Previously, `world`=>`base_link`, now `zero_point_link`=>`base_link`.
+
 ## Support
 
 For questions and suggestions, please use [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues).

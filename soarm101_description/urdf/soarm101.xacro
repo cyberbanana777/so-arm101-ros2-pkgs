@@ -14,7 +14,7 @@
   </material>
 
   <!--=================== LINKS ===================-->
-  <link name="world"/>
+  <link name="zero_point_link"/>
 
   <!-- Link base -->
   <link name="base_link">
@@ -301,8 +301,8 @@
   </link>
 
   <!--=================== JOINTS ===================-->
-  <joint name="world_to_base_joint" type="fixed">
-    <parent link="world"/>
+  <joint name="zero_point_to_base_joint" type="fixed">
+    <parent link="zero_point_link"/>
     <child link="base_link"/>
     <origin xyz="-0.021 0.0485 -0.03" quat="0.0 0.0 -0.707108 0.707108"/>
   </joint>

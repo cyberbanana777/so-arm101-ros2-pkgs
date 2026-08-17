@@ -2,7 +2,8 @@ import os
 import re
 import xacro
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler, TimerAction
+from launch.event_handlers import OnShutdown
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
@@ -31,6 +32,8 @@ def launch_setup(context, *args, **kwargs):
     pkg_soarm101_bringup = get_package_share_directory('soarm101_bringup')
     pkg_soarm101_ros2_control = get_package_share_directory('soarm101_ros2_control')
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
+    
+    node_namespace = arm_type
 
     # 1. Parse xacro file with mappings
     xacro_file = os.path.join(pkg_soarm101_bringup, 'urdf', 'full.xacro')
@@ -49,25 +52,32 @@ def launch_setup(context, *args, **kwargs):
     # 2. Replace package:// with absolute file paths
     urdf_resolved = resolve_package_uris(urdf_str)
 
-    robot_params = {'robot_description': urdf_resolved}
+    robot_params = {
+        'robot_description': urdf_resolved,
+        'frame_prefix': f'{arm_type}/'
+        }
 
     # ---- Robot state publisher is always needed ----
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
+        namespace=node_namespace,
         output='screen',
         parameters=[robot_params]
     )
 
     # ---- Helper function: create a spawner node ----
-    def spawner_node(name, controller_manager='/controller_manager', param_file=None):
+    def spawner_node(name, controller_manager=None, param_file=None):
+        if controller_manager is None:
+            controller_manager = '/' + node_namespace + '/controller_manager'
         args = [name, '-c', controller_manager]
         if param_file:
             args.extend(['--param-file', param_file])
         return Node(
             package='controller_manager',
             executable='spawner',
+            namespace=node_namespace,
             arguments=args,
             output='screen'
         )
@@ -83,22 +93,47 @@ def launch_setup(context, *args, **kwargs):
         spawn_robot = Node(
             package='ros_gz_sim',
             executable='create',
+            namespace=node_namespace,
             arguments=['-name', 'soarm101', '-topic', 'robot_description'],
             output='screen'
         )
         controllers_yaml = os.path.join(pkg_soarm101_ros2_control, 'config', 'sim_controllers.yaml')
 
         # --- joint_state_broadcaster is always needed ---
-        jsb = spawner_node('joint_state_broadcaster', param_file=controllers_yaml)
+        jsb = spawner_node(
+            name='joint_state_broadcaster',
+            controller_manager=f'{node_namespace}/controller_manager',
+            param_file=controllers_yaml
+        )
 
         nodes = [robot_state_publisher, gz_sim, spawn_robot, jsb]
 
         # --- Trajectory and gripper controllers are only needed for follower ---
         if arm_type == 'follower':
-            jtc = spawner_node('joint_trajectory_controller', param_file=controllers_yaml)
-            gripper = spawner_node('gripper_controller', param_file=controllers_yaml)
+            jtc = spawner_node(
+                name='joint_trajectory_controller',
+                controller_manager=f'{node_namespace}/controller_manager',
+                param_file=controllers_yaml
+            )
+            gripper = spawner_node(
+                name='gripper_controller',
+                controller_manager=f'{node_namespace}/controller_manager',
+                param_file=controllers_yaml
+            )
             nodes.extend([jtc, gripper])
 
+        # ---- Added handler for shutdown with timeout ----
+        shutdown_handler = RegisterEventHandler(
+            OnShutdown(
+                on_shutdown=[
+                    TimerAction(
+                        period=10.0,
+                        actions=[]
+                    )
+                ]
+            )
+        )
+        nodes.append(shutdown_handler)
         return nodes
 
     else:
@@ -107,22 +142,47 @@ def launch_setup(context, *args, **kwargs):
         control_node = Node(
             package='controller_manager',
             executable='ros2_control_node',
+            namespace=node_namespace,
             parameters=[robot_params, controllers_yaml],
             output='screen'
         )
 
         # --- joint_state_broadcaster and telemetry are always needed ---
-        jsb = spawner_node('joint_state_broadcaster', param_file=controllers_yaml)
-        telemetry = spawner_node('soarm101_telemetry_controller', param_file=controllers_yaml)
+        jsb = spawner_node(
+            name='joint_state_broadcaster',
+            param_file=controllers_yaml
+        )
+        telemetry = spawner_node(
+            name='soarm101_telemetry_controller',
+            param_file=controllers_yaml
+        )
 
         nodes = [robot_state_publisher, control_node, jsb, telemetry]
 
         # --- Trajectory and gripper controllers are only needed for follower ---
         if arm_type == 'follower':
-            jtc = spawner_node('joint_trajectory_controller', param_file=controllers_yaml)
-            gripper = spawner_node('gripper_controller', param_file=controllers_yaml)
+            jtc = spawner_node(
+                name='joint_trajectory_controller',
+                param_file=controllers_yaml
+            )
+            gripper = spawner_node(
+                name='gripper_controller',
+                param_file=controllers_yaml
+            )
             nodes.extend([jtc, gripper])
 
+        # ---- Added handler for shutdown with timeout ----
+        shutdown_handler = RegisterEventHandler(
+            OnShutdown(
+                on_shutdown=[
+                    TimerAction(
+                        period=10.0,
+                        actions=[]
+                    )
+                ]
+            )
+        )
+        nodes.append(shutdown_handler)
         return nodes
 
 def generate_launch_description():

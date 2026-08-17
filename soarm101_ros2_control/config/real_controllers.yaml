@@ -1,4 +1,6 @@
-controller_manager:
+# Leader settings
+
+leader/controller_manager:
   ros__parameters:
     update_rate: 100
     use_sim_time: false
@@ -17,7 +19,7 @@ controller_manager:
       type: soarm101_telemetry_controller/ServoTelemetryController
 
 # ===== CONTROLLERS SETTINGS =====
-joint_trajectory_controller:
+leader/joint_trajectory_controller:
   ros__parameters:
     joints:
       - shoulder_pan_joint
@@ -31,7 +33,7 @@ joint_trajectory_controller:
       - position
       - velocity
 
-gripper_controller:
+leader/gripper_controller:
   ros__parameters:
     joint: gripper_jaw_joint
     command_interfaces:
@@ -40,7 +42,75 @@ gripper_controller:
       - position
       - velocity
 
-soarm101_telemetry_controller:
+leader/soarm101_telemetry_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_flex_joint
+      - wrist_flex_joint
+      - wrist_roll_joint
+      - gripper_jaw_joint
+    motor_ids: [1, 2, 3, 4, 5, 6]
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+      - temperature
+      - voltage
+      - current
+      - moving_flag
+      - max_torque
+      - enable_torque
+
+
+
+# Follower settings
+
+follower/controller_manager:
+  ros__parameters:
+    update_rate: 100
+    use_sim_time: false
+    # ========================================
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    gripper_controller:
+      type: position_controllers/GripperActionController
+    
+    soarm101_telemetry_controller:
+      type: soarm101_telemetry_controller/ServoTelemetryController
+
+# ===== CONTROLLERS SETTINGS =====
+follower/joint_trajectory_controller:
+  ros__parameters:
+    open_loop_control: false
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_flex_joint
+      - wrist_flex_joint
+      - wrist_roll_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+follower/gripper_controller:
+  ros__parameters:
+    joint: gripper_jaw_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+follower/soarm101_telemetry_controller:
   ros__parameters:
     joints:
       - shoulder_pan_joint
