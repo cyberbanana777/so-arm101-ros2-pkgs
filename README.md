@@ -21,6 +21,7 @@
 | **`soarm101_examples`** | Примеры узлов для управления суставами и схватом через action-интерфейсы. |
 | **`converter_calibration_data`** | Инструмент для конвертации калибровочных данных из формата lerobot в кастомный YAML. |
 | **`scservo_sdk`** | SDK для работы с сервоприводами Feetech (SCSCL, SMS_STS, HLSCL, SCS0009). |
+| **`soarm101_teleoperate`** | Софт для реализации телеуправления follower-рукой с помощью leader-руки |
 
 ---
 
@@ -60,18 +61,25 @@
    # имена симлинков должны быть soarm101_follower и soarm101_leader
    sudo ./create_usev_rule.sh
    ```
-7. **Соберите workspace** (из корня рабочей области):  
+
+7. **Произведите настройку для реального времени ROS2_control**. Для этого необходимо перейти по ссылке и выполнить то, что описано в [гайде](https://control.ros.org/master/doc/ros2_control/controller_manager/doc/userdoc.html#:~:text=For%20real%2Dtime,and%20in%20again.)
+
+8. **Соберите workspace** (из корня рабочей области):  
    ```bash 
    cd ..
    colcon build
    ```  
-8. **Запустите полный стек** через bringup:  
+9a. **Если Вы хотите запустить 1 робота, то Запустите полный стек** через bringup:  
    ```bash
    source install/setup.bash
    ros2 launch soarm101_bringup bringup.launch.py use_sim:=false
    ```
    Для симуляции в Gazebo замените `use_sim:=false` на `use_sim:=true`.
-
+9b. **Если Вы хотите запустить 2 роботов в режиме телеуправления**, то выполните команду:
+   ```bash
+   source install/setup.bash
+   ros2 launch soarm101_teleoperate teleoperate.launch.py
+   ```
 ---
 
 ## Внешние интерфейсы стека (Public API)

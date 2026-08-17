@@ -5,7 +5,7 @@
 - create the structure of programms levels
 - create README.md translated into English (Alex)
 - add the description of the new script `create_udev_rule.sh` 
-- add the setup real-time executing for ros2_control (check ros2_control docs) (Alex)
+- change the block of `Внешние интерфейсы стека (Public API)`
 
 
 ## scservo_sdk
@@ -40,7 +40,6 @@
 ## soarm101_examples
 - check README (Alice)
 - create README.md translated into English after Alice's check (Alex) 
-- add start the rqt_controller_manager such as launch file (check the ros2_control docs)(Alex) 
 
 ## soarm101_teleoperation
 - create docs

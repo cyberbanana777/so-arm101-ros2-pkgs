@@ -110,6 +110,19 @@ ros2 launch soarm101_examples rqt_joint_trajectory_controller.launch.py
 - Задать целевые позиции ползунками,
 - Отправить траекторию на выполнение.
 
+
+---
+
+### 4. Launch-файл: `rqt_controller_manager.launch.py`
+
+Запускает графический интерфейс `rqt_controller_manager` для анализа системы с точки зрения ros2_control controller_manager. Удобно для анализа состояния частей системы.
+
+**Использование:**
+
+```bash
+ros2 launch soarm101_examples rqt_controller_manager.launch.py
+```
+
 ---
 
 ## Взаимодействие с системой
@@ -167,6 +180,7 @@ client.send_goal_async(goal)
 - `trajectory_msgs` – сообщения для траекторий.
 - `control_msgs` – action-интерфейсы контроллеров.
 - `rqt_joint_trajectory_controller` – GUI-плагин для ручного управления.
+- `rqt_controller_manager` – GUI-плагин для анализа ros2_control системы.
 
 ---
 
