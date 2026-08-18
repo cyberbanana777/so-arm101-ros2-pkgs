@@ -98,7 +98,20 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         )
         controllers_yaml = os.path.join(pkg_soarm101_ros2_control, 'config', 'sim_controllers.yaml')
-
+        control_node = Node(
+            package='controller_manager',
+            executable='ros2_control_node',
+            namespace=node_namespace,
+            parameters=[controllers_yaml],
+            remappings=[
+                ('/follower/controller_manager/robot_description', '/follower/robot_description'),
+                ('/leader/controller_manager/robot_description', '/leader/robot_description')    
+                ('/controller_manager/robot_description', '/robot_description')    
+            ],
+            output='screen'
+            
+        )
+        
         # --- joint_state_broadcaster is always needed ---
         jsb = spawner_node(
             name='joint_state_broadcaster',
@@ -106,7 +119,7 @@ def launch_setup(context, *args, **kwargs):
             param_file=controllers_yaml
         )
 
-        nodes = [robot_state_publisher, gz_sim, spawn_robot, jsb]
+        nodes = [robot_state_publisher, gz_sim, control_node, spawn_robot, jsb]
 
         # --- Trajectory and gripper controllers are only needed for follower ---
         if arm_type == 'follower':
@@ -143,7 +156,11 @@ def launch_setup(context, *args, **kwargs):
             package='controller_manager',
             executable='ros2_control_node',
             namespace=node_namespace,
-            parameters=[robot_params, controllers_yaml],
+            parameters=[controllers_yaml],
+            remappings=[
+                ('/follower/controller_manager/robot_description', '/follower/robot_description'),
+                ('/leader/controller_manager/robot_description', '/leader/robot_description')    
+            ],
             output='screen'
         )
 

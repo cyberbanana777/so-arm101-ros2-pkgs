@@ -79,7 +79,7 @@ def generate_launch_description():
     name='arm_relay',
     output='screen',
     parameters=[{
-        'command_timeout': 0.0015,
+        'command_timeout': 0.002,
         'publish_rate': 50.0,
         'ignored_joints': ['gripper_jaw_joint'],
         }]
