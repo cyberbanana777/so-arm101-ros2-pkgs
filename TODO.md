@@ -2,7 +2,7 @@
 
 
 ## README
-- create the structure of programms levels
+- check README (Alice)
 - create README.md translated into English (Alex)
 
 

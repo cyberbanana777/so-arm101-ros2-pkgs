@@ -25,6 +25,121 @@
 
 ---
 
+## Архитектура решения
+
+Программный стек состоит из нескольких логических уровней. На диаграммах ниже показаны два основных сценария передачи данных.
+
+### Одиночный запуск робота (soarm101_bringup)
+
+```mermaid
+flowchart TD
+    User[Пользователь] --> Launch[soarm101_bringup<br>bringup.launch.py]
+    Launch --> Xacro[xacro full.xacro]
+    Xacro --> Desc[soarm101_description<br>URDF / меши]
+    Xacro --> R2Cfg[soarm101_ros2_control<br>real_controllers.yaml + xacro-макросы]
+    Xacro --> RSP[robot_state_publisher<br>namespace = arm_type]
+    Xacro --> RCS[ros2_control_node<br>namespace = arm_type]
+
+    RCS --> CM[controller_manager]
+    CM --> HW[soarm101_hardware plugin<br>Follower или Leader]
+    HW --> SDK[scservo_sdk]
+    SDK <-->|UART| Servos[Feetech STS3215]
+    HW -->|читает YAML| Calib[converter_calibration_data<br>leader/follower_motor_calibration.yaml]
+
+    HW -->|state interfaces| JSB[joint_state_broadcaster]
+    HW -->|state interfaces| TC[soarm101_telemetry_controller]
+    HW -->|command interface<br>только follower| JTC[joint_trajectory_controller]
+    HW -->|command interface<br>только follower| Gripper[gripper_controller]
+
+    CM --> JSB
+    CM --> TC
+    CM -->|только follower| JTC
+    CM -->|только follower| Gripper
+
+    JSB -->|/joint_states| JSTopic[sensor_msgs/JointState]
+    TC -->|/soarm101_telemetry_controller/motor_states| MSTopic[soarm101_interfaces/MotorStates]
+    JTC -->|action follow_joint_trajectory| JTCAction[control_msgs/FollowJointTrajectory]
+    Gripper -->|action gripper_cmd| GAction[control_msgs/GripperCommand]
+
+    RSP -->|/tf и /robot_description| TF[TF / robot_description]
+```
+
+**Важно:**  
+Для `arm_type=leader` аппаратный плагин экспортирует только state-интерфейсы, поэтому контроллеры `joint_trajectory_controller` и `gripper_controller` не загружаются.
+
+### Телеуправление (soarm101_teleoperate)
+
+```mermaid
+flowchart TD
+    User[Пользователь] --> Teleop[soarm101_teleoperate<br>teleoperate.launch.py]
+
+    Teleop --> L_Bringup[soarm101_bringup<br>arm_type=leader]
+    Teleop --> F_Bringup[soarm101_bringup<br>arm_type=follower]
+
+    subgraph LeaderArm["Leader-рука (только чтение)"]
+        L_Control[ros2_control_node<br>namespace=leader]
+        L_HW[soarm101_hardware leader]
+        L_SDK[scservo_sdk]
+        L_Servos[Сервы leader]
+        L_TC[soarm101_telemetry_controller]
+        L_JSB[joint_state_broadcaster]
+        L_RSP[robot_state_publisher]
+
+        L_Control --> L_HW --> L_SDK <-->|UART| L_Servos
+        L_HW -->|state| L_TC
+        L_HW -->|state| L_JSB
+        L_RSP -->|/leader/robot_description| L_Desc[robot_description]
+    end
+
+    subgraph FollowerArm["Follower-рука (управление)"]
+        F_Control[ros2_control_node<br>namespace=follower]
+        F_HW[soarm101_hardware follower]
+        F_SDK[scservo_sdk]
+        F_Servos[Сервы follower]
+        F_JTC[joint_trajectory_controller]
+        F_GC[gripper_controller]
+        F_TC[soarm101_telemetry_controller]
+        F_JSB[joint_state_broadcaster]
+        F_RSP[robot_state_publisher]
+
+        F_Control --> F_HW --> F_SDK <-->|UART| F_Servos
+        F_HW -->|state| F_TC
+        F_HW -->|state| F_JSB
+        F_HW -->|command| F_JTC
+        F_HW -->|command| F_GC
+        F_RSP -->|/follower/robot_description| F_Desc[robot_description]
+    end
+
+    L_Bringup --> L_Control
+    L_Bringup --> L_RSP
+    F_Bringup --> F_Control
+    F_Bringup --> F_RSP
+
+    L_TC -->|/leader/soarm101_telemetry_controller/motor_states| Telemetry[soarm101_interfaces/MotorStates]
+
+    Telemetry -->|все суставы кроме gripper_jaw_joint| ArmRelay[arm_relay]
+    Telemetry -->|gripper_jaw_joint| GripperRelay[gripper_relay]
+
+    ArmRelay -->|/follower/joint_trajectory_controller/joint_trajectory<br>JointTrajectory| F_JTC
+    GripperRelay -->|/follower/gripper_controller/gripper_cmd<br>action GripperCommand| F_GC
+
+    StaticTF[static_transform_publisher_world_to_arms] -->|world_frame → leader/zero_point_link<br>world_frame → follower/zero_point_link| TF[TF tree]
+    MarkerPub[marker_publisher] -->|/markers| MarkerArray[visualization_msgs/MarkerArray]
+
+    RViz[RViz] -->|подписки| TF
+    RViz -->|подписки| MarkerArray
+    RViz -->|/leader/robot_description| L_Desc
+    RViz -->|/follower/robot_description| F_Desc
+```
+
+**Ключевые связи телеуправления:**
+- Leader-рука публикует телеметрию в `/leader/soarm101_telemetry_controller/motor_states`.
+- `arm_relay` подписывается на неё и публикует `JointTrajectory` в топик follower.
+- `gripper_relay` отправляет команду схвату через action.
+- Статические трансформации и маркеры позволяют RViz корректно отображать обе руки.
+
+---
+
 ## Требования к системе
 
 - **Операционная система**: Ubuntu 22.04 (рекомендуется)  
