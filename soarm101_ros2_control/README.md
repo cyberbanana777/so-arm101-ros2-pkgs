@@ -10,7 +10,7 @@
   - `real_controllers.yaml` – для работы с реальным роботом (100 Гц, отключено `use_sim_time`). Загружаются контроллеры: `joint_state_broadcaster`, `joint_trajectory_controller` (только для follower), `gripper_controller` (только для follower), `soarm101_telemetry_controller`.
   - `sim_controllers.yaml` – для симуляции в Gazebo (50 Гц, включено `use_sim_time: true`). Загружаются `joint_state_broadcaster`, `joint_trajectory_controller`, `gripper_controller`.
 
-- **`urdf/`** – xacro‑макросы для включения в основной URDF:
+- **`urdf/`** – xacro‑макросы, включающиеся в основной URDF:
   - **`ros2_control_real.xacro`** – содержит макросы для реального робота:
     - `joint_servo_with_command` – объявляет command и state интерфейсы для follower.
     - `joint_servo_without_command` – объявляет только state интерфейсы для leader (без команды).
@@ -94,18 +94,6 @@
 ### Для фолловера (с управлением)
 - Экспортируются все интерфейсы (position, velocity, effort, temperature, voltage, current, moving_flag, max_torque, enable_torque) и command интерфейс (position).
 - Контроллеры управления загружаются и активны.
-
----
-
-## Доработки для симуляции
-
-В файле `IMPROVEMENTS_SIM.md` собраны рекомендации по улучшению работы в Gazebo:
-- Добавление ПИД-регуляторов.
-- Расширение набора командных интерфейсов.
-- Реализация mimic-сочленений.
-- Настройка параметров плагина `gz_ros2_control`.
-
-Эти улучшения помогут добиться более реалистичного поведения робота в симуляции.
 
 ---
 

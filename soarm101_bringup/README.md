@@ -19,23 +19,6 @@
 
 ---
 
-## Структура пакета
-
-```
-soarm101_bringup/
-├── launch/
-│   └── bringup.launch.py          # Главный launch-файл
-├── urdf/
-│   └── full.xacro                 # Сборка полного URDF с выбором ros2_control
-├── test/                          # Тесты (flake8, pep257, copyright)
-├── package.xml
-├── setup.py
-├── setup.cfg
-├── LICENSE
-└── resource/                      # Файл для ament_index
-```
-
----
 
 ## Launch-файл: `bringup.launch.py`
 
@@ -157,7 +140,7 @@ ros2 launch soarm101_bringup bringup.launch.py \
 
 - Управляющие контроллеры (`joint_trajectory_controller`, `gripper_controller`) загружаются **только** для `arm_type == follower`.
 - Для `leader` доступны только состояние и телеметрия.
-- Все параметры (порт, скорость, ускорение) передаются через launch-аргументы, что упрощает перенастройку без редактирования xacro-файлов.
+- Все параметры (порт, скорость, ускорение) передаются через launch-аргументы.
 
 ---
 

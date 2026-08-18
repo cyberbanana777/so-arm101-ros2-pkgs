@@ -1,3 +1,5 @@
 .vscode
 .refact
 __pycache__
+
+voice_to_text

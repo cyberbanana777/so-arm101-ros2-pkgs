@@ -1,6 +1,6 @@
 # soarm101_telemetry_controller
 
-Пакет предоставляет кастомный контроллер для сбора и публикации телеметрии сервоприводов робота SOARM101. Он читает state-интерфейсы из `ros2_control` (экспортируемые компонентом `soarm101_hardware`) и формирует удобное агрегированное сообщение `MotorStates`, содержащее все измеряемые параметры каждого мотора, включая расширенные поля `max_torque` и `enable_torque`.
+Пакет предоставляет кастомный контроллер для сбора и публикации телеметрии сервоприводов робота SOARM101. Он читает state-интерфейсы из `ros2_control` (экспортируемые компонентом `soarm101_hardware`) и формирует удобное агрегированное сообщение `MotorStates`, содержащее все измеряемые параметры каждого мотора, включая дополнительные поля `max_torque` и `enable_torque`.
 
 ---
 
@@ -28,28 +28,31 @@
 ```yaml
 controller_manager:
   ros__parameters:
-    update_rate: 100  # Гц
+    update_rate: 100  # Hz
 
     soarm101_telemetry_controller:
       type: soarm101_telemetry_controller/ServoTelemetryController
-      joints:
-        - shoulder_pan_joint
-        - shoulder_lift_joint
-        - elbow_flex_joint
-        - wrist_flex_joint
-        - wrist_roll_joint
-        - gripper_jaw_joint
-      motor_ids: [1, 2, 3, 4, 5, 6]
-      interface_names:
-        - position
-        - velocity
-        - effort
-        - temperature
-        - voltage
-        - current
-        - moving_flag
-        - max_torque
-        - enable_torque
+
+soarm101_telemetry_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_flex_joint
+      - wrist_flex_joint
+      - wrist_roll_joint
+      - gripper_jaw_joint
+    motor_ids: [1, 2, 3, 4, 5, 6]
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+      - temperature
+      - voltage
+      - current
+      - moving_flag
+      - max_torque
+      - enable_torque
 ```
 
 ---
@@ -102,25 +105,6 @@ def callback(msg: MotorStates):
 
 sub = node.create_subscription(MotorStates, '/soarm101_telemetry_controller/motor_states', callback, 10)
 ```
-
----
-
-## Дальнейшее развитие
-
-В пакете присутствует файл `IMPROVEMENTS.md`, в котором перечислены возможные улучшения:
-- Публикация стандартного `sensor_msgs/JointState` для совместимости.
-- Фильтрация данных (сглаживание).
-- Настраиваемая частота публикации.
-- Выборочная публикация полей.
-- Диагностика и мониторинг пределов.
-- Обработка ошибок и переподключение.
-- Агрегированная статистика.
-- Сервисы управления.
-- Сохранение в файл.
-- Преобразование в одометрию (forward kinematics).
-
-Приоритетные улучшения отмечены в документе.
-
 ---
 
 ## Зависимости

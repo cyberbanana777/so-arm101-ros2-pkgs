@@ -17,29 +17,17 @@
 - check license requirements (Alice)
 
 ## soarm101_hardware
-- check README (Alice)
-- create README.md translated into English after Alice's check (Alex) 
 - check license requirements (Alice) 
 
 ## soarm101_ros2_control
-- check README (Alice)
-- create README.md translated into English after Alice's check (Alex) 
 
 ## soarm101_bringup
-- check README (Alice)
-- create README.md translated into English after Alice's check (Alex) 
 
 ## soarm101_telemetry_controller
-- check README (Alice)
-- create README.md translated into English after Alice's check (Alex) 
 
 ## converter_calibration_data
-- check README (Alice)
-- create README.md translated into English after Alice's check (Alex) 
 
 ## soarm101_examples
-- check README (Alice)
-- create README.md translated into English after Alice's check (Alex) 
 
 ## soarm101_teleoperation
 - create docs
