@@ -99,3 +99,21 @@ Example xacro fragment (in `ros2_control_real.xacro`):
   <!-- ... -->
 </hardware>
 ```
+
+---
+
+## License
+
+The package is distributed under the **Apache 2-0** license (see the [LICENSE](LICENSE) file in the package root).
+
+---
+
+## Version
+
+**2.0.1** – code stability has been improved.
+
+---
+
+## Support
+
+Please submit questions and suggestions via [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues).

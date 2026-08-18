@@ -150,7 +150,13 @@ SOARM101SystemHardwareFollower::on_init(const hardware_interface::HardwareInfo &
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto & joint = info_.joints[i];
     auto & motor = motors_[i];
-    motor.id = motor_ids_[joint.name];
+    auto it = motor_ids_.find(joint.name);
+    if (it == motor_ids_.end()) {
+      RCLCPP_ERROR(rclcpp::get_logger("SOARM101SystemHardwareFollower"),
+                   "Unknown joint name: %s", joint.name.c_str());
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+    motor.id = it->second;
     motor.joint_name = joint.name;
 
     if (joint.parameters.find("initial_position") != joint.parameters.end()) {
@@ -204,10 +210,16 @@ SOARM101SystemHardwareFollower::on_configure(const rclcpp_lifecycle::State & /*p
     motor.command_position = motor.sensors.position;
   }
 
-  // --- Setup max torques ---
-  for (size_t i = 0; i < motors_.size(); ++i) {
-    auto & motor = motors_[i];
-    motor.max_torque = max_torques_[i];
+  if (max_torques_.size() == motors_.size()) {
+      for (size_t i = 0; i < motors_.size(); ++i) {
+          motors_[i].max_torque = max_torques_[i];
+      }
+  } else {
+      RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardwareFollower"),
+                  "max_torques not set or size mismatch, using default 0.0 for all motors.");
+      for (auto & motor : motors_) {
+          motor.max_torque = 0.0;
+      }
   }
 
   RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardwareFollower"), "Configuration completed");
@@ -260,17 +272,17 @@ SOARM101SystemHardwareFollower::on_activate(const rclcpp_lifecycle::State & /*pr
 {
   RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardwareFollower"), "Activating...");
 
-  for (const auto & pair : motor_ids_) {
-    int motor_id = pair.second;
+  for (auto & motor : motors_) {
+    int motor_id = motor.id;
     if (servo_driver_.EnableTorque(motor_id, ENABLE_TORQUE) != 1) {
-      motors_[motor_id].sensors.enable_torque = 0.0;
+      motor.sensors.enable_torque = 0.0;
       RCLCPP_ERROR(
         rclcpp::get_logger("SOARM101SystemHardwareFollower"),
         "Failed to enable torque for motor %d", motor_id);
       return hardware_interface::CallbackReturn::ERROR;
     }
     else{
-      motors_[motor_id].sensors.enable_torque = 1.0;
+      motor.sensors.enable_torque = 1.0;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
@@ -306,8 +318,8 @@ SOARM101SystemHardwareFollower::on_deactivate(const rclcpp_lifecycle::State & /*
   }
 
   // --- Disable torque ---
-  for (const auto & pair : motor_ids_) {
-    int motor_id = pair.second;
+  for (auto & motor : motors_) {
+    int motor_id = motor.id;
     if (servo_driver_.EnableTorque(motor_id, DISABLE_TORQUE) == 0) {
       RCLCPP_ERROR(
         rclcpp::get_logger("SOARM101SystemHardwareFollower"),
@@ -694,7 +706,7 @@ std::vector<double> SOARM101SystemHardwareFollower::parseMaxTorques(const std::s
   return result;
 }
 
-}  // namespace soarm101_hardware
+}  // namespace soarm101_hardware_follower
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(soarm101_hardware_follower::SOARM101SystemHardwareFollower, hardware_interface::SystemInterface)

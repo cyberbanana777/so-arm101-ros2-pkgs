@@ -150,7 +150,13 @@ SOARM101SystemHardwareLeader::on_init(const hardware_interface::HardwareInfo & i
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto & joint = info_.joints[i];
     auto & motor = motors_[i];
-    motor.id = motor_ids_[joint.name];
+    auto it = motor_ids_.find(joint.name);
+    if (it == motor_ids_.end()) {
+      RCLCPP_ERROR(rclcpp::get_logger("SOARM101SystemHardwareLeader"),
+                   "Unknown joint name: %s", joint.name.c_str());
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+    motor.id = it->second;
     motor.joint_name = joint.name;
   }
 
@@ -192,11 +198,16 @@ SOARM101SystemHardwareLeader::on_configure(const rclcpp_lifecycle::State & /*pre
     motor.command_position = motor.sensors.position;
   }
 
-  for (size_t i = 0; i < motors_.size(); ++i) {
-    auto & motor = motors_[i];
-    motor.max_torque = max_torques_[i];
-    RCLCPP_INFO(rclcpp::get_logger("SOARM101SystemHardwareFollower"), "Max torque for motor with ID=%zu . M_max = %f", i, motor.max_torque);
-
+  if (max_torques_.size() == motors_.size()) {
+      for (size_t i = 0; i < motors_.size(); ++i) {
+          motors_[i].max_torque = max_torques_[i];
+      }
+  } else {
+      RCLCPP_WARN(rclcpp::get_logger("SOARM101SystemHardwareLeader"),
+                  "max_torques not set or size mismatch, using default 0.0");
+      for (auto & motor : motors_) {
+          motor.max_torque = 0.0;
+      }
   }
 
 
@@ -589,7 +600,7 @@ std::vector<double> SOARM101SystemHardwareLeader::parseParkPositions(const std::
   std::vector<double> result;
   std::string s = str;
   // Remove square brackets if present
-  if (s.front() == '[' && s.back() == ']') {
+  if (!s.empty() && s.front() == '[' && s.back() == ']') {
     s = s.substr(1, s.length() - 2);
   }
   std::stringstream ss(s);
@@ -618,7 +629,7 @@ std::vector<double> SOARM101SystemHardwareLeader::parseMaxTorques(const std::str
   std::vector<double> result;
   std::string s = str;
   // Remove square brackets if present
-  if (s.front() == '[' && s.back() == ']') {
+  if (!s.empty() && s.front() == '[' && s.back() == ']') {
     s = s.substr(1, s.length() - 2);
   }
   std::stringstream ss(s);

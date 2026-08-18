@@ -98,3 +98,22 @@
   <param name="calibration_file">$(find converter_calibration_data)/config/leader_motor_calibration.yaml</param>
   <!-- ... -->
 </hardware>
+```
+
+---
+
+## Лицензия
+
+Пакет распространяется под лицензией **Apache 2-0** (см. файл [LICENSE](LICENSE) в корне пакета).
+
+---
+
+## Версия
+
+**2.0.1** – улучшена стабильность кода.
+
+---
+
+## Поддержка
+
+Вопросы и предложения оформляйте через [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues).

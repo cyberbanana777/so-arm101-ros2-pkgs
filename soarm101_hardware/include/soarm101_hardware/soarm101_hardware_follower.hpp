@@ -32,7 +32,7 @@
 
 
 #ifndef SOARM101_HARDWARE_FOLLOWER_SOARM101_SYSTEM_HPP_
-#define SOARM101_HARDWARE_FOLLOWWR_SOARM101_SYSTEM_HPP_
+#define SOARM101_HARDWARE_FOLLOWER_SOARM101_SYSTEM_HPP_
 
 #include <array>
 #include <memory>
@@ -318,6 +318,6 @@ private:
   std::vector<double> parseMaxTorques(const std::string & str);
 };
 
-}  // namespace soarm101_hardware_LEADER
+}  // namespace soarm101_hardware_follower
 
-#endif  // SOARM101_HARDWARE_LEADER_SOARM101_SYSTEM_HPP_
+#endif  // SOARM101_HARDWARE_FOLLOWER_SOARM101_SYSTEM_HPP_
