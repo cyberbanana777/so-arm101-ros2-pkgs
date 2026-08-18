@@ -9,39 +9,11 @@ leader/controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    joint_trajectory_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
-
-    gripper_controller:
-      type: position_controllers/GripperActionController
     
     soarm101_telemetry_controller:
       type: soarm101_telemetry_controller/ServoTelemetryController
 
 # ===== CONTROLLERS SETTINGS =====
-leader/joint_trajectory_controller:
-  ros__parameters:
-    joints:
-      - shoulder_pan_joint
-      - shoulder_lift_joint
-      - elbow_flex_joint
-      - wrist_flex_joint
-      - wrist_roll_joint
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
-      - velocity
-
-leader/gripper_controller:
-  ros__parameters:
-    joint: gripper_jaw_joint
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
-      - velocity
-
 leader/soarm101_telemetry_controller:
   ros__parameters:
     joints:
