@@ -14,7 +14,7 @@
   <depend>trajectory_msgs</depend>
   <depend>control_msgs</depend>
   <depend>rqt_joint_trajectory_controller</depend>
-  <depend>rqt_joint_controller_manager</depend>
+  <depend>rqt_controller_manager</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
