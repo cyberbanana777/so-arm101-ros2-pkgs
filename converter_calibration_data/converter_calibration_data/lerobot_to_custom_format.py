@@ -1,3 +1,4 @@
+```python
 #!/usr/bin/env python3
 
 # Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
@@ -8,10 +9,10 @@
 Convert robot arm configuration from JSON to YAML.
 
 Usage:
-    python3 lerobot_to_custom_format.py <path_to_input.json> <path_to_output.yaml>
+    python3 lerobot_to_custom_format.py <path_to_input.json> <path_to_output.yaml> <leader|follower>
 
 Example:
-    python3 lerobot_to_custom_format.py ./my_awesome_follower_arm.json ../config/motor_calibration.yaml
+    python3 lerobot_to_custom_format.py ./my_awesome_follower_arm.json ../config/motor_calibration.yaml follower
 """
 
 import json
@@ -21,13 +22,14 @@ import sys
 import yaml
 
 
-def convert_config(input_file: str, output_file: str, prefix:str) -> None:
+def convert_config(input_file: str, output_file: str, prefix: str) -> None:
     """
     Read JSON configuration, transform joint names, and write to YAML.
 
     Args:
         input_file: Path to the input JSON file.
-        output_file: Path to the output YAML file.
+        output_file: Path to the output YAML file (without prefix).
+        prefix: Prefix for the output filename ('leader' or 'follower').
 
     Raises:
         SystemExit: On file errors or conversion issues.
@@ -80,9 +82,13 @@ def convert_config(input_file: str, output_file: str, prefix:str) -> None:
             print(f"Failed to create output directory '{output_dir}': {e}")
             sys.exit(1)
 
+    # Form the final output path: prefix is added to the filename, not to the whole path
+    output_basename = os.path.basename(output_file)
+    final_output = os.path.join(output_dir, f"{prefix}_{output_basename}")
+
     # Write YAML
     try:
-        with open(f"{prefix}_{output_file}", 'w', encoding='utf-8') as f:
+        with open(final_output, 'w', encoding='utf-8') as f:
             yaml.dump(
                 output_data,
                 f,
@@ -97,19 +103,23 @@ def convert_config(input_file: str, output_file: str, prefix:str) -> None:
 
     print("Conversion completed successfully.")
     print(f"Input file: {input_file}")
-    print(f"Output file: {output_file}")
+    print(f"Output file: {final_output}")
 
 
 def main():
     """Parse command line arguments and run conversion."""
     if len(sys.argv) != 4:
-        print("Error: Please specify input JSON and output YAML paths.")
-        print(f"Usage: {sys.argv[0]} <input_json> <output_yaml>")
+        print("Error: Please specify input JSON, output YAML paths, and prefix.")
+        print(f"Usage: {sys.argv[0]} <input_json> <output_yaml> <leader|follower>")
         sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
     prefix = sys.argv[3]
+
+    if prefix not in ("leader", "follower"):
+        print("Error: prefix must be 'leader' or 'follower'")
+        sys.exit(1)
 
     if not os.path.isfile(input_file):
         print(f"Error: Input file not found: {input_file}")
@@ -120,3 +130,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
