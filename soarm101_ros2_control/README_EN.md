@@ -114,6 +114,8 @@ The package is distributed under the **MIT** license (see the [LICENSE](LICENSE)
 
 ## Version
 
+**3.0.1** – unused controllers for the leader arm have been removed
+
 **3.0.0** – changed the structure of the real robot config. Added separation by prefix, i.e. there is a separate config for `leader` and a separate one for `follower`.
 
 **2.1.0** – added support for the `max_torque` and `enable_torque` interfaces in the real robot configurations; updated xacro macros and the telemetry controller YAML configuration.
