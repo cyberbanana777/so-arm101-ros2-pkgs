@@ -228,9 +228,9 @@ bool ServoTelemetryController::parse_parameters()
   return true;
 }
 
-}  // namespace soarm101_odometry_controller
+}  // namespace soarm101_telemetry_controller
 
-// ---------- Регистрация плагина ----------
+// ---------- Plugin registration ----------
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
   soarm101_telemetry_controller::ServoTelemetryController,
