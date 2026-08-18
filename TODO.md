@@ -4,8 +4,6 @@
 ## README
 - create the structure of programms levels
 - create README.md translated into English (Alex)
-- add the description of the new script `create_udev_rule.sh` 
-- change the block of `Внешние интерфейсы стека (Public API)`
 
 
 ## scservo_sdk
@@ -30,9 +28,6 @@
 ## soarm101_examples
 
 ## soarm101_teleoperation
-- create docs
-- translate comments into English
-- prepare the pkg for publication
 - check README (Alice)
 - create README.md translated into English after Alice's check (Alex) 
 

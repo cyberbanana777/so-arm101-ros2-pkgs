@@ -6,7 +6,7 @@ package_name = 'soarm101_teleoperate'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='1.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -38,7 +38,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'teleoperate_node = soarm101_teleoperate.teleoperate_node:main',
             'marker_publisher = soarm101_teleoperate.marker_publisher:main',
             'static_transform_publisher_world_to_arms = soarm101_teleoperate.static_transform_publisher_world_to_arms:main',
             'gripper_relay = soarm101_teleoperate.gripper_relay:main',

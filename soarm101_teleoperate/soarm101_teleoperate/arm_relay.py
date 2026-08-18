@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
+# SPDX-License-Identifier: MIT
+# Details in the LICENSE file in the root of the package.
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
@@ -8,13 +12,14 @@ from soarm101_interfaces.msg import MotorStates
 from rclpy.duration import Duration
 from std_msgs.msg import Header
 
+
 class LeaderFollowerRelay(Node):
     def __init__(self):
         super().__init__('leader_follower_relay')
         self.get_logger().info('LeaderFollowerRelay node started')
 
-        # ---- Параметры ----
-        self.declare_parameter('command_timeout', 0.0015)  # время на движение к цели
+        # ---- Parameters ----
+        self.declare_parameter('command_timeout', 0.0015)  # time to reach target
         self.declare_parameter('publish_rate', 50.0)
         self.declare_parameter('ignored_joints', ['gripper_jaw_joint'])
 
@@ -36,31 +41,35 @@ class LeaderFollowerRelay(Node):
             self.leader_callback,
             qos
         )
-        self.get_logger().info('Subscribed to /leader/soarm101_telemetry_controller/motor_states')
+        self.get_logger().info(
+            'Subscribed to /leader/soarm101_telemetry_controller/motor_states'
+        )
 
-        # ---- Публикация ----
+        # ---- Publishers ----
         self.cmd_pub = self.create_publisher(
             JointTrajectory,
             '/follower/joint_trajectory_controller/joint_trajectory',
             10
         )
-        self.get_logger().info('Publishing to /follower/joint_trajectory_controller/joint_trajectory')
+        self.get_logger().info(
+            'Publishing to /follower/joint_trajectory_controller/joint_trajectory'
+        )
 
-        # ---- Ограничение частоты ----
+        # ---- Frequency limitation ----
         self.last_publish_time = self.get_clock().now()
         self.min_interval = 1.0 / self.publish_rate if self.publish_rate > 0 else 0.0
 
     def leader_callback(self, msg: MotorStates):
         now = self.get_clock().now()
 
-        # Ограничение частоты
+        # Frequency limitation
         if (now - self.last_publish_time).nanoseconds * 1e-9 < self.min_interval:
             return
 
         if not msg.motors:
             return
 
-        # ---- Фильтрация суставов ----
+        # ---- Filtering joints ----
         joint_names = []
         positions = []
 
@@ -73,26 +82,23 @@ class LeaderFollowerRelay(Node):
         if not joint_names:
             return
 
-        # ---- Формируем траекторию с "нулевым" временем относительно сейчас ----
-        # Этот способ заставляет контроллер мгновенно начать движение к новой цели.
-        # Используем текущее время как старт, а цель достигается через command_timeout.
         trajectory = JointTrajectory()
         trajectory.header = Header()
-        trajectory.header.stamp = now.to_msg()  # Важно: текущее время
+        trajectory.header.stamp = now.to_msg()
         trajectory.header.frame_id = 'world_frame'
 
         trajectory.joint_names = joint_names
 
         point = JointTrajectoryPoint()
         point.positions = positions
-        # Устанавливаем время для достижения цели (относительно времени в header)
         point.time_from_start = Duration(seconds=self.command_timeout).to_msg()
 
         trajectory.points = [point]
 
-        # ---- Публикация ----
+        # ---- Publish ----
         self.cmd_pub.publish(trajectory)
         self.last_publish_time = now
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -105,6 +111,7 @@ def main(args=None):
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

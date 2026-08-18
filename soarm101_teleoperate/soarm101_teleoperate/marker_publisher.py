@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
+# SPDX-License-Identifier: MIT
+# Details in the LICENSE file in the root of the package.
+
+import os
+
 import yaml
 import rclpy
 from rclpy.node import Node
 from visualization_msgs.msg import Marker, MarkerArray
 from tf_transformations import quaternion_from_euler
-import os
 from ament_index_python.packages import get_package_share_directory
+
 
 class MarkerPublisher(Node):
     def __init__(self):
@@ -20,7 +26,7 @@ class MarkerPublisher(Node):
         )
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
-        
+
         self.marker_config = config['markers']
         self.pub = self.create_publisher(MarkerArray, '/markers', 10)
         self.timer = self.create_timer(1.0, self.publish_markers)
@@ -28,8 +34,8 @@ class MarkerPublisher(Node):
 
     def create_diamond_markers(self, frame_id, color, text, offset_z, size):
         markers = []
-        
-        # Текст
+
+        # Text marker
         text_marker = Marker()
         text_marker.header.frame_id = frame_id
         text_marker.header.stamp = self.get_clock().now().to_msg()
@@ -50,7 +56,7 @@ class MarkerPublisher(Node):
         text_marker.lifetime = rclpy.duration.Duration(seconds=2.0).to_msg()
         markers.append(text_marker)
 
-        # Куб 1: повёрнут на 45° вокруг оси X
+        # Cube rotated 45° around Z axis
         cube1 = Marker()
         cube1.header.frame_id = frame_id
         cube1.header.stamp = self.get_clock().now().to_msg()
@@ -74,30 +80,6 @@ class MarkerPublisher(Node):
         cube1.lifetime = rclpy.duration.Duration(seconds=2.0).to_msg()
         markers.append(cube1)
 
-        # # Куб 2: повёрнут на -45° вокруг оси X
-        # cube2 = Marker()
-        # cube2.header.frame_id = frame_id
-        # cube2.header.stamp = self.get_clock().now().to_msg()
-        # cube2.ns = 'dual_arm'
-        # cube2.id = 2
-        # cube2.type = Marker.CUBE
-        # cube2.action = Marker.ADD
-        # cube2.pose.position.z = offset_z
-        # q2 = quaternion_from_euler(-0.785, 0.0, 0.0)  # -45°
-        # cube2.pose.orientation.x = q2[0]
-        # cube2.pose.orientation.y = q2[1]
-        # cube2.pose.orientation.z = q2[2]
-        # cube2.pose.orientation.w = q2[3]
-        # cube2.scale.x = size
-        # cube2.scale.y = size * 0.5
-        # cube2.scale.z = size * 0.5
-        # cube2.color.r = color[0]
-        # cube2.color.g = color[1]
-        # cube2.color.b = color[2]
-        # cube2.color.a = 0.8
-        # cube2.lifetime = rclpy.duration.Duration(seconds=2.0).to_msg()
-        # markers.append(cube2)
-
         return markers
 
     def publish_markers(self):
@@ -113,9 +95,11 @@ class MarkerPublisher(Node):
 
             if shape == 'diamond':
                 size = params.get('diamond_size', 0.1)
-                markers = self.create_diamond_markers(frame_id, color, text, offset_z, size)
+                markers = self.create_diamond_markers(
+                    frame_id, color, text, offset_z, size
+                )
             else:
-                # fallback: сфера с текстом
+                # Fallback: sphere with text
                 text_marker = Marker()
                 text_marker.header.frame_id = frame_id
                 text_marker.header.stamp = self.get_clock().now().to_msg()
@@ -143,6 +127,7 @@ class MarkerPublisher(Node):
 
         self.pub.publish(marker_array)
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = MarkerPublisher()
@@ -154,5 +139,7 @@ def main(args=None):
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+
+
 if __name__ == '__main__':
     main()

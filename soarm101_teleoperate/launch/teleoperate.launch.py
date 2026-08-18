@@ -1,7 +1,11 @@
+# Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
+# SPDX-License-Identifier: MIT
+# Details in the LICENSE file in the root of the package.
+
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, ExecuteProcess
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -9,19 +13,18 @@ from launch.actions import RegisterEventHandler, TimerAction
 from launch.event_handlers import OnShutdown
 
 def generate_launch_description():
-    # ----- Аргументы -----
+    # ----- Arguments -----
     leader_port = LaunchConfiguration('leader_port')
     follower_port = LaunchConfiguration('follower_port')
-    rviz_config = LaunchConfiguration('rviz_config', default='dual_arm.rviz')
     leader_namespace = 'leader'
     follower_namespace = 'follower'
 
-    # ----- Пути -----
+    # ----- Paths -----
     pkg_bringup = get_package_share_directory('soarm101_bringup')
     pkg_teleoperate = get_package_share_directory('soarm101_teleoperate')
     bringup_launch = os.path.join(pkg_bringup, 'launch', 'bringup.launch.py')
 
-    # ----- Запуск leader ----- 
+    # ----- Start leader ----- 
     leader_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(bringup_launch),
         launch_arguments={
@@ -33,7 +36,7 @@ def generate_launch_description():
         }.items()
     )
 
-    # ----- Запуск follower -----
+    # ----- Start follower -----
     follower_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(bringup_launch),
         launch_arguments={
@@ -45,7 +48,7 @@ def generate_launch_description():
         }.items()
     )
 
-    # Нода статической трансформации (загружает параметры из YAML)
+    # node for static transform
     static_tf_node = Node(
         package='soarm101_teleoperate',
         executable='static_transform_publisher_world_to_arms',
@@ -53,17 +56,15 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Нода маркеров (тоже из YAML)
+    # marker publisher node
     marker_node = Node(
         package='soarm101_teleoperate',
         executable='marker_publisher',
         name='marker_publisher',
         output='screen'
     )
-    # ----- Запуск RViz с конфигурацией -----
-    # Создаём дефолтную конфигурацию, если файла нет
+    # ----- Start RViz with config -----
     rviz_default_config = os.path.join(pkg_teleoperate, 'rviz', 'dual_arm.rviz')
-    # Если файла нет, можно использовать базовую конфигурацию MoveIt
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -99,8 +100,8 @@ def generate_launch_description():
         OnShutdown(
             on_shutdown=[
                 TimerAction(
-                    period=10.0,   # ждём 10 секунд перед завершением
-                    actions=[]     # ничего не делаем, просто ждём
+                    period=10.0,   # waiting 10 sec before shutdown
+                    actions=[]     # no actions, just waiting
                 )
             ]
         )
@@ -109,7 +110,6 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('leader_port', default_value='/dev/soarm101_leader', description='Serial port for leader arm'),
         DeclareLaunchArgument('follower_port', default_value='/dev/soarm101_follower', description='Serial port for follower arm'),
-        DeclareLaunchArgument('rviz_config', default_value='dual_arm.rviz', description='RViz config file name'),
         leader_launch,
         follower_launch,
         static_tf_node,

@@ -21,7 +21,7 @@
 | **`soarm101_examples`** | Примеры узлов для управления суставами и схватом через action-интерфейсы. |
 | **`converter_calibration_data`** | Инструмент для конвертации калибровочных данных из формата lerobot в кастомный YAML. |
 | **`scservo_sdk`** | SDK для работы с сервоприводами Feetech (SCSCL, SMS_STS, HLSCL, SCS0009). |
-| **`soarm101_teleoperate`** | Софт для реализации телеуправления follower-рукой с помощью leader-руки |
+| **`soarm101_teleoperate`** | Телеуправление follower-рукой с помощью leader-руки: relay-узлы, статические трансформации, маркеры. |
 
 ---
 
@@ -48,13 +48,21 @@
    cd so-arm101-ros2-pkgs_ws/src
    git clone https://github.com/cyberbanana777/so-arm101-ros2-pkgs.git .
    ```  
-5. **Преобразуйте калибровочные данные** в нужный формат:  
+5. **Преобразуйте калибровочные данные** в нужный формат.  
+   Для leader-руки:
    ```bash
-      cd converter_calibration_data/converter_calibration_data
-      pip install -r pip_requirements.txt
-      python3 lerobot_to_custom_format.py </global/path/to/lerobot_calib.json> ../config/motor_calibration.yaml
-   ```    
-6. **Создайте симлинки для фиксации устройства внутри ОС**. Запустите скрипт и выполняйте инструкции, указанные в нём:
+   cd converter_calibration_data
+   pip install -r pip_requirements.txt
+   cd converter_calibration_data
+   python3 lerobot_to_custom_format.py </global/path/to/lerobot_calib.json> ../config/motor_calibration.yaml leader
+   ```
+   Для follower-руки:
+   ```bash
+   python3 lerobot_to_custom_format.py </global/path/to/lerobot_calib.json> ../config/motor_calibration.yaml follower
+   ```
+6. **Создайте стабильные имена портов (udev-правила).**  
+   Скрипт `create_udev_rule.sh` автоматически находит USB-устройства с VID:PID `1a86:55d3` (конвертер интерфейсов для взаимодействия с Feetech-сервоприводами), просит поочерёдно подключать их и назначить имена. На выходе создаётся файл `/etc/udev/rules.d/99-soarm-usb-serial.rules` с симлинками вида `/dev/soarm101_leader`, `/dev/soarm101_follower` и т.д.  
+   Подробное описание скрипта — в разделе [Создание udev-правил](#создание-udev-правил).
    ```bash
    cd ../..
    chmod +x create_udev_rule.sh
@@ -80,24 +88,84 @@
    source install/setup.bash
    ros2 launch soarm101_teleoperate teleoperate.launch.py
    ```
+   При необходимости укажите порты:
+   ```bash
+   ros2 launch soarm101_teleoperate teleoperate.launch.py \
+     leader_port:=/dev/soarm101_leader \
+     follower_port:=/dev/soarm101_follower
+   ```
+---
+
+## Создание udev-правил
+
+Скрипт `create_udev_rule.sh` предназначен для автоматической генерации udev-правил, обеспечивающих стабильные имена последовательных портов для сервоприводов SOARM101. Без этого при каждом подключении устройства могут получать разные имена `/dev/ttyACM*`, что приводит к ошибкам в конфигурации.
+
+### Что делает скрипт
+
+- Ищет все подключенные устройства с VID:PID `1a86:55d3` (Feetech-сервоприводы, используемые в SOARM101).  
+- Просит пользователя отключить все устройства, затем подключать их по одному.  
+- Для каждого нового устройства определяет серийный номер (`ID_SERIAL_SHORT`) и просит задать желаемое имя (например, `soarm101_leader`).  
+- Генерирует файл `/etc/udev/rules.d/99-soarm-usb-serial.rules` с правилами:  
+  ```
+  SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d3", ATTRS{serial}=="<серийный номер>", SYMLINK+="<имя>", MODE="0666"
+  ```
+- Перезагружает udev-правила и активирует их.  
+- Выводит список созданных симлинков и их целевые устройства.
+
+### Использование
+
+```bash
+sudo ./create_udev_rule.sh
+```
+
+Скрипт запускается с правами root и работает интерактивно:
+
+1. Убедитесь, что все целевые устройства отключены, нажмите Enter.  
+2. Поочерёдно подключайте устройства и для каждого вводите имя (или оставьте пустым, чтобы использовать серийный номер).  
+3. После добавления всех устройств введите `done`.  
+4. Скрипт создаст правила, применит их и покажет итоговые симлинки.
+
+**Важно:** в нашем стеке используются два устройства: leader и follower. Рекомендуется задавать имена `soarm101_leader` и `soarm101_follower` соответственно, чтобы launch-файлы могли найти порты по умолчанию.
+
 ---
 
 ## Внешние интерфейсы стека (Public API)
 
-После запуска системы внешние пользователи и узлы могут взаимодействовать с роботом через следующие ROS2-интерфейсы:
+После запуска системы внешние пользователи и узлы могут взаимодействовать с роботом через следующие ROS2-интерфейсы.
+
+### Одиночная рука (bringup)
 
 **Топики (Topics):**
-- `/joint_states` (`sensor_msgs/msg/JointState`) — текущие положения, скорости и усилия всех сочленений (публикуется стандартным контроллером).
-- `/soarm101_telemetry_controller/motor_states` (`soarm101_interfaces/msg/MotorStates`) — расширенные данные телеметрии: температура сервоприводов, напряжение, флаги ошибок (публикуется кастомным телеметрийным контроллером).
+- `/joint_states` (`sensor_msgs/msg/JointState`) — текущие положения, скорости и усилия всех сочленений.  
+  В телеоперационном режиме дополнительно доступны:  
+  - `/leader/joint_states`  
+  - `/follower/joint_states`
+- `/robot_description` (`std_msgs/msg/String`) — описание робота.  
+  В телеоперационном режиме дополнительно доступны:  
+  - `/leader/robot_description`  
+  - `/follower/robot_description`
+- `/soarm101_telemetry_controller/motor_states` (`soarm101_interfaces/msg/MotorStates`) — расширенные данные телеметрии: температура сервоприводов, напряжение, ток, флаги движения и ошибок.
 - `/tf` — трансформации между звеньями робота (для визуализации в RViz и навигации).
 
 **Действия (Actions):**
 - `/joint_trajectory_controller/follow_joint_trajectory` (стандартный action из `control_msgs`) — основной интерфейс для выполнения траекторий (используется MoveIt2 и примерами).
-- `/gripper_controller/gripper_cmd (control_msgs/action/GripperCommand)` — управление схватом.
+- `/gripper_controller/gripper_cmd` (`control_msgs/action/GripperCommand`) — управление схватом.
 
-Примечание: точные названия топиков и типов сообщений могут уточняться в документации к соответствующим пакетам.
+### Телеуправление (`soarm101_teleoperate`)
 
-> **Примечание:**  точные названия топиков и типов сообщений могут уточняться в документации к соответствующим пакетам.
+**Топики (Topics):**
+- `/leader/soarm101_telemetry_controller/motor_states` (`soarm101_interfaces/msg/MotorStates`) — телеметрия leader-руки, источник для ретрансляции.
+- `/follower/joint_trajectory_controller/joint_trajectory` (`trajectory_msgs/msg/JointTrajectory`) — команды для follower-руки, формируемые relay-узлом.
+- `/markers` (`visualization_msgs/msg/MarkerArray`) — маркеры для визуальной идентификации рук в RViz.
+
+**Действия (Actions):**
+- `/follower/gripper_controller/gripper_cmd` (`control_msgs/action/GripperCommand`) — команда схвату follower-руки от relay-узла.
+
+**Статические трансформации:**
+- `world_frame` → `leader/zero_point_link`
+- `world_frame` → `follower/zero_point_link`
+
+> **Примечание:** точные названия топиков и типов сообщений могут уточняться в документации к соответствующим пакетам.
 
 ---
 
@@ -121,7 +189,7 @@
 
 ## Контакты и поддержка
 
-- Вопросы и предложения оформляйте через [Issues](../../issues).  
+- Вопросы и предложения оформляйте через [Issues](https://github.com/cyberbanana777/so-arm101-ros2-pkgs/issues).  
 
 ---
 

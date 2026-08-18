@@ -1,4 +1,8 @@
-# Позиции zero_point_link для каждой руки в мире
+# Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
+# SPDX-License-Identifier: MIT
+# Details in the LICENSE file in the root of the package.
+
+# positions zero_point_link for each arm in the world
 world:
   leader:
     translation:
@@ -19,14 +23,14 @@ world:
       pitch: 0.0
       yaw: 0.0
 
-# Маркеры для идентификации рук (привязываем к zero_point_link)
+# MArkers for identification arms (link to zero_point_link)
 markers:
   leader:
     text: "Leader"
     color: [0.0, 1.0, 0.0, 1.0]
     offset_z: 0.4
     shape: "diamond"
-    diamond_size: 0.05   # базовый размер ромба
+    diamond_size: 0.05
   follower:
     text: "Follower"
     color: [0.0, 0.0, 1.0, 1.0]
