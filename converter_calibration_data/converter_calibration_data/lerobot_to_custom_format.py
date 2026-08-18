@@ -1,4 +1,3 @@
-```python
 #!/usr/bin/env python3
 
 # Copyright (c) 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
@@ -130,4 +129,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
