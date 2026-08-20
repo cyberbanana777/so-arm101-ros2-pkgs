@@ -1,8 +1,6 @@
 MIT License
 
-Copyright (c) 2024 FTServo
-Copyright (c) 2025 Aditya Kamath (Kamath Robotics)
-Copyright (c) 2026 Alice Zenina and Alexander Grachev (RTU MIREA)
+Copyright (c) 2026 Alice Zenina and Alexander Grachev, RTU MIREA
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+=============================================================================
+NOTE ON COMPOSITE LICENSING:
+This repository contains multiple ROS 2 packages. Some packages contain 
+third-party code licensed under different terms (e.g., Apache License 2.0).
+Please refer to the THIRD_PARTY.md file and the individual LICENSE files 
+within each package directory (src/*) for specific licensing terms applicable 
+to those components.
+=============================================================================

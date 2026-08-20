@@ -104,7 +104,7 @@ Example xacro fragment (in `ros2_control_real.xacro`):
 
 ## License
 
-The package is distributed under the **Apache 2-0** license (see the [LICENSE](LICENSE) file in the package root).
+The package is distributed under the **Apache-2.0** license (see the [LICENSE](LICENSE) file in the package root).
 
 ---
 

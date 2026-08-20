@@ -5,13 +5,12 @@
 
 ## scservo_sdk
 - check license requirements (Alice)
+- What files was be change? (Alex for Alice)
 - analyze the details of CMakeFiles.txt (Alex)
 
 ## soarm101_description
-- check license requirements (Alice)
 
 ## soarm101_hardware
-- check license requirements (Alice) 
 
 ## soarm101_ros2_control
 

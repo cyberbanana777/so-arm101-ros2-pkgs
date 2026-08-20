@@ -1,6 +1,18 @@
-SOARM101 Hardware Component
-Copyright 2024 The HuggingFace Inc. team.
-Modifications and additional features:
-  Copyright 2026 Alice Zenina and Alexander Grachev RTU MIREA (Russia)
-This software includes code originally developed by HuggingFace Inc.,
-distributed under the Apache License, Version 2.0.
+NOTICE
+======
+
+This package (soarm101_hardware) contains modified versions of source code 
+originally provided by The HuggingFace Inc. team (2024).
+
+Modifications made by Alice Zenina and Alexander Grachev, RTU MIREA (2026):
+- Aggregated all motor data into a single `Motor` struct.
+- Added park position support (`park_positions` parameter).
+- Added configurable default speed/accel (`default_speed`, `default_accel`).
+- Precomputed calibration coefficients for faster conversion.
+- Replaced dynamic vectors with std::array in write().
+- Unified read logic into `readMotorData()`.
+- Fixed motor_id vs index bug in sensor reading.
+- Changed moving_flag type to double for StateInterface compatibility.
+- Added `moveToParkPosition()` and `parseParkPositions()`.
+
+Modifications to the original work are licensed under the same Apache 2.0 license.

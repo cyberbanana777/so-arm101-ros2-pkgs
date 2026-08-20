@@ -1,0 +1,17 @@
+NOTICE
+======
+
+This package (scservo_sdk) contains modified versions of source code 
+originally provided by the following authors:
+
+1. FTServo (Copyright (c) 2024)
+2. Aditya Kamath / Kamath Robotics (Copyright (c) 2025)
+
+The original source code is available at:
+https://github.com/adityakamath/SCServo_Linux
+
+This package has been modified by Alice Zenina and Alexander Grachev, RTU MIREA 
+(Copyright (c) 2026) for integration into the SOARM101 ROS 2 stack.
+
+All parts of this package are distributed under the terms of the MIT License.
+See the LICENSE file for the full license text.

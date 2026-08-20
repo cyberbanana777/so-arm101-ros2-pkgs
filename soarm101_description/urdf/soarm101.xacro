@@ -1,7 +1,27 @@
 <?xml version="1.0"?>
+<!--
+  Copyright 2024 The Robot Studio
+  Copyright 2026 Alice Zenina and Alexander Grachev, RTU MIREA
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  NOTICE OF MODIFICATIONS:
+  This file is a derivative work based on the original SO-ARM100 URDF 
+  (https://github.com/TheRobotStudio/SO-ARM100).
+  
+  Significant modifications made by Alice Zenina and Alexander Grachev (2026):
+  - Converted from static URDF to Xacro format for flexible parameterization.
+  - Added 'zero_point_link' and 'zero_point_to_base_joint' for proper world attachment.
+  - Renamed joints and links (e.g., 'gripper' -> 'gripper_jaw_joint') for ros2_control compatibility.
+  - Updated mesh paths to use the ROS 2 'package://soarm101_description/meshes/...' URI scheme.
+  - Adjusted inertial and visual/collision origins to match the new coordinate frames.
+-->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="soarm101">
 
-  <!-- Modified by Alice Zenina and Alexander Grachev RTU MIREA (Russia) on 2026-07-24 -->
   <!-- Arguments -->
   <xacro:arg name="use_sim" default="true"/>
 

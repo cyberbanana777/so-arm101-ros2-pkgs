@@ -1,0 +1,17 @@
+NOTICE
+======
+
+This package (soarm101_description) contains modified versions of source code 
+and 3D models originally provided by The Robot Studio (first released in 2024).
+
+Original source repository:
+https://github.com/TheRobotStudio/SO-ARM100 
+(Original file: Simulation/SO101/so101_new_calib.urdf and associated STL meshes)
+
+Modifications made by Alice Zenina and Alexander Grachev, RTU MIREA (2026):
+- Adaptation for the ROS 2 stack (added 'world' link and 'world_to_base_joint').
+- Migration to Xacro format for flexible parameterization.
+- Renaming of joints and links for seamless integration with ros2_control 
+  and soarm101_hardware packages.
+
+This product includes software and designs developed by The Robot Studio.

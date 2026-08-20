@@ -5,7 +5,7 @@
   <version>2.0.1</version>
   <description>Hardware interface for real SO-ARM101 via SerialPort. ROS2_control hardware component plugin.</description>
   <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
-  <license>Apache License 2.0</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
