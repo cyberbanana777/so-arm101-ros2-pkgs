@@ -105,7 +105,7 @@ def launch_setup(context, *args, **kwargs):
             parameters=[controllers_yaml],
             remappings=[
                 ('/follower/controller_manager/robot_description', '/follower/robot_description'),
-                ('/leader/controller_manager/robot_description', '/leader/robot_description')    
+                ('/leader/controller_manager/robot_description', '/leader/robot_description'),    
                 ('/controller_manager/robot_description', '/robot_description')    
             ],
             output='screen'
