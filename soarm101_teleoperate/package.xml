@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>soarm101_teleoperate</name>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <description>The pkg allow teleoperate follower-arm from leader-arm</description>
   <maintainer email="sashagrachev2005@gmail.com">banana-killer</maintainer>
   <license>MIT</license>
@@ -18,6 +18,7 @@
   <depend>tf_transformations</depend>
   <depend>tf2_ros</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>ament_index_python</depend>
   <depend>python3-yaml</depend>
 

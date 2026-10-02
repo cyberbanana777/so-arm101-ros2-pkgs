@@ -10,6 +10,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from rclpy.action import ActionClient
 from control_msgs.action import GripperCommand
 from soarm101_interfaces.msg import MotorStates
+from std_srvs.srv import SetBool
 
 
 class GripperRelay(Node):
@@ -20,6 +21,8 @@ class GripperRelay(Node):
         # ---- Parameters ----
         self.declare_parameter('max_effort', 10.0)       # max torque (N)
         self.declare_parameter('joint_name', 'gripper_jaw_joint')
+        self.declare_parameter('enabled', True)
+        self.enabled = bool(self.get_parameter('enabled').value)
         self.max_effort = self.get_parameter('max_effort').value
         self.joint_name = self.get_parameter('joint_name').value
         self.get_logger().info(
@@ -55,11 +58,24 @@ class GripperRelay(Node):
             'Action client for /follower/gripper_controller/gripper_cmd created'
         )
 
+        # ---- Pause / resume (used by playback tools) ----
+        self.create_service(SetBool, '~/set_enabled', self.set_enabled_callback)
+
         # ---- Store last sent position to avoid spamming ----
         self.last_position = None
         self.last_goal_handle = None
 
+    def set_enabled_callback(self, request, response):
+        self.enabled = request.data
+        self.last_position = None  # resend the leader position on resume
+        response.success = True
+        response.message = 'enabled' if self.enabled else 'paused'
+        self.get_logger().info(f'Relay {response.message}')
+        return response
+
     def leader_callback(self, msg: MotorStates):
+        if not self.enabled:
+            return
         target_position = None
         for motor in msg.motors:
             if motor.joint_name == self.joint_name:
