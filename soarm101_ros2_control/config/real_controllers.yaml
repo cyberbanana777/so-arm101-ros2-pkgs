@@ -80,7 +80,7 @@ follower/controller_manager:
 follower/joint_trajectory_controller:
   ros__parameters:
     allow_nonzero_velocity_at_trajectory_end: false 
-    open_loop_control: false
+    open_loop_control: true
     joints:
       - shoulder_pan_joint
       - shoulder_lift_joint

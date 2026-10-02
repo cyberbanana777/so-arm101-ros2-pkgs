@@ -143,6 +143,8 @@ The package is distributed under the **MIT** license (see the `LICENSE` file in 
 
 ## Version
 
+**1.1.0** - movement smoothness has been improved in the default configuration.
+
 **1.0.0** — package released.
 
 ---

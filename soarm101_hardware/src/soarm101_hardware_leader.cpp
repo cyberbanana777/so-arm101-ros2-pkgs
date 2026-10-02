@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <limits>
@@ -472,13 +473,13 @@ void SOARM101SystemHardwareLeader::readMotorData(size_t index)
   auto & motor = motors_[index];
 
   if (servo_driver_.FeedBack(motor_id) != 0) {
-    int raw_pos         = servo_driver_.ReadPos(motor_id);
-    int raw_velocity    = servo_driver_.ReadSpeed(motor_id);
-    int raw_effort      = servo_driver_.ReadLoad(motor_id);
-    int raw_temperature = servo_driver_.ReadTemper(motor_id);
-    int raw_voltage     = servo_driver_.ReadVoltage(motor_id);
-    int raw_current     = servo_driver_.ReadCurrent(motor_id);
-    int raw_moving_flag = servo_driver_.ReadMove(motor_id);
+    int raw_pos         = servo_driver_.ReadPos(-1);
+    int raw_velocity    = servo_driver_.ReadSpeed(-1);
+    int raw_effort      = servo_driver_.ReadLoad(-1);
+    int raw_temperature = servo_driver_.ReadTemper(-1);
+    int raw_voltage     = servo_driver_.ReadVoltage(-1);
+    int raw_current     = servo_driver_.ReadCurrent(-1);
+    int raw_moving_flag = servo_driver_.ReadMove(-1);
 
     motor.sensors.position = rawToRadians(raw_pos, motor);
     motor.sensors.velocity = static_cast<double>(raw_velocity) / 4096.0 * 2.0 * M_PI;
@@ -507,7 +508,7 @@ int SOARM101SystemHardwareLeader::radiansToRaw(double radians, const Motor & mot
 {
   const auto & calib = motor.calibration;
   double clamped = std::min(calib.urdf_upper, std::max(calib.urdf_lower, radians));
-  return static_cast<int>((clamped - calib.rad_to_raw_offset) * calib.rad_to_raw_scale + calib.range_min);
+  return static_cast<int>(std::lround((clamped - calib.rad_to_raw_offset) * calib.rad_to_raw_scale + calib.range_min));
 }
 
 // ----------------------------------------------------------------------------
@@ -569,7 +570,7 @@ void SOARM101SystemHardwareLeader::moveToParkPosition()
     for (size_t i = 0; i < info_.joints.size(); ++i) {
       int motor_id = motors_[i].id;
       if (servo_driver_.FeedBack(motor_id) != 0) {
-        int flag = servo_driver_.ReadMove(motor_id);
+        int flag = servo_driver_.ReadMove(-1);
         if (flag != 0) {
           moving = true;
           break;

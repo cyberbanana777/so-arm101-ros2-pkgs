@@ -19,8 +19,8 @@ class LeaderFollowerRelay(Node):
         self.get_logger().info('LeaderFollowerRelay node started')
 
         # ---- Parameters ----
-        self.declare_parameter('command_timeout', 0.0015)  # time to reach target
-        self.declare_parameter('publish_rate', 50.0)
+        self.declare_parameter('command_timeout', 0.03)  # time to reach target, ~1-3 telemetry periods
+        self.declare_parameter('publish_rate', 0.0)  # 0 = relay every leader message
         self.declare_parameter('ignored_joints', ['gripper_jaw_joint'])
 
         self.command_timeout = self.get_parameter('command_timeout').value
@@ -84,7 +84,8 @@ class LeaderFollowerRelay(Node):
 
         trajectory = JointTrajectory()
         trajectory.header = Header()
-        trajectory.header.stamp = now.to_msg()
+        # Zero stamp = "start executing on receipt". With a real stamp the
+        # transport delay is eaten from time_from_start, which matters at ~30 ms.
         trajectory.header.frame_id = 'world_frame'
 
         trajectory.joint_names = joint_names

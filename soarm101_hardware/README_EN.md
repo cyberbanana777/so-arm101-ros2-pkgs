@@ -110,6 +110,8 @@ The package is distributed under the **Apache-2.0** license (see the [LICENSE](L
 
 ## Version
 
+**2.0.2** – latency of reading data from servos has been reduced.
+
 **2.0.1** – code stability has been improved.
 
 ---

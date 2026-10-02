@@ -44,7 +44,7 @@ def generate_launch_description():
             'port': follower_port,
             'use_sim': 'false',
             'max_speed': '3400',
-            'max_accel': '254',
+            'max_accel': '150',
         }.items()
     )
 
@@ -79,8 +79,8 @@ def generate_launch_description():
     name='arm_relay',
     output='screen',
     parameters=[{
-        'command_timeout': 0.002,
-        'publish_rate': 50.0,
+        'command_timeout': 0.025,
+        'publish_rate': 100.0,
         'ignored_joints': ['gripper_jaw_joint'],
         }]
     )
