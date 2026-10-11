@@ -115,22 +115,19 @@ def launch_setup(context, *args, **kwargs):
         # --- joint_state_broadcaster is always needed ---
         jsb = spawner_node(
             name='joint_state_broadcaster',
-            controller_manager=f'{node_namespace}/controller_manager',
             param_file=controllers_yaml
         )
 
-        nodes = [robot_state_publisher, gz_sim, control_node, spawn_robot, jsb]
+        nodes = [robot_state_publisher, gz_sim, spawn_robot, jsb]
 
         # --- Trajectory and gripper controllers are only needed for follower ---
         if arm_type == 'follower':
             jtc = spawner_node(
                 name='joint_trajectory_controller',
-                controller_manager=f'{node_namespace}/controller_manager',
                 param_file=controllers_yaml
             )
             gripper = spawner_node(
                 name='gripper_controller',
-                controller_manager=f'{node_namespace}/controller_manager',
                 param_file=controllers_yaml
             )
             nodes.extend([jtc, gripper])

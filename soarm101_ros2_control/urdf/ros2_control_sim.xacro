@@ -4,7 +4,10 @@
   <!-- Plugin for Ignition Gazebo (gz_ros2_control) -->
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <parameters>filename="package://soarm101_ros2_control/config/sim_controllers.yaml"</parameters>
+      <parameters>$(find soarm101_ros2_control)/config/sim_controllers.yaml</parameters>
+      <ros>
+        <namespace>/$(arg arm_type)</namespace>
+      </ros>
     </plugin>
   </gazebo>
 
